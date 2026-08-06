@@ -1,19 +1,100 @@
 const STORAGE_KEY = "lifexp-state-v1";
 
 const defaultCatalog = [
-    { id: "task-joggen", name: "🏃 Joggen", xp: 15, active: true, custom: false },
-    { id: "task-ruecken", name: "🧘 Rückengymnastik", xp: 20, active: true, custom: false },
-    { id: "task-suessigkeiten", name: "🍫 Süßigkeiten gegessen", xp: -10, active: true, custom: false },
-    { id: "task-spazieren", name: "🚶 Spazieren", xp: 10, active: false, custom: false },
-    { id: "task-aufraeumen", name: "🧹 Aufräumen", xp: 10, active: false, custom: false },
-    { id: "task-salat", name: "🥗 Salat essen", xp: 10, active: false, custom: false },
-    { id: "task-lesen", name: "📖 30 Minuten lesen", xp: 10, active: false, custom: false },
-    { id: "task-zaehne", name: "🪥 Zähne putzen", xp: 5, active: false, custom: false },
-    { id: "task-sport", name: "🏋️ Sport", xp: 15, active: false, custom: false },
-    { id: "task-vitamin", name: "💊 Vitamin nehmen", xp: 5, active: false, custom: false }
+    {
+        id: "task-joggen",
+        name: "🏃 Joggen",
+        xp: 15,
+        active: true,
+        custom: false
+    },
+    {
+        id: "task-ruecken",
+        name: "🧘 Rückengymnastik",
+        xp: 20,
+        active: true,
+        custom: false
+    },
+    {
+        id: "task-suessigkeiten",
+        name: "🍫 Süßigkeiten gegessen",
+        xp: -10,
+        active: true,
+        custom: false
+    },
+    {
+        id: "task-spazieren",
+        name: "🚶 Spazieren",
+        xp: 10,
+        active: true,
+        custom: false
+    },
+    {
+        id: "task-sport",
+        name: "🏋️ Sport",
+        xp: 15,
+        active: true,
+        custom: false
+    },
+    {
+        id: "task-todo-oeffnen",
+        name: "📋 To-do-Liste öffnen",
+        xp: 5,
+        active: true,
+        custom: false
+    },
+    {
+        id: "task-todo-bearbeiten",
+        name: "✍️ Etwas von der To-do-Liste abhaken",
+        xp: 10,
+        active: true,
+        custom: false
+    },
+    {
+        id: "task-aufraeumen",
+        name: "🧹 Aufräumen",
+        xp: 10,
+        active: false,
+        custom: false
+    },
+    {
+        id: "task-salat",
+        name: "🥗 Salat essen",
+        xp: 10,
+        active: false,
+        custom: false
+    },
+    {
+        id: "task-lesen",
+        name: "📖 30 Minuten lesen",
+        xp: 10,
+        active: false,
+        custom: false
+    },
+    {
+        id: "task-zaehne",
+        name: "🪥 Zähne putzen",
+        xp: 5,
+        active: false,
+        custom: false
+    },
+    {
+        id: "task-vitamin-c",
+        name: "💊 Vitamin C nehmen",
+        xp: 5,
+        active: false,
+        custom: false
+    },
+    {
+        id: "task-kreatin",
+        name: "🥄 Kreatin nehmen",
+        xp: 5,
+        active: false,
+        custom: false
+    }
 ];
-
 const defaultState = {
+    schemaVersion: 3,
     dailyGoal: 50,
     gridSize: 2,
     tasks: defaultCatalog,
@@ -100,13 +181,44 @@ function loadState() {
 
         const existingIds = new Set(migratedTasks.map((task) => task.id));
 
-        defaultCatalog.forEach((catalogTask) => {
-            if (!existingIds.has(catalogTask.id)) {
-                migratedTasks.push(clone(catalogTask));
-            }
-        });
+       defaultCatalog.forEach((catalogTask) => {
+    const existingTask = migratedTasks.find(
+        (task) => task.id === catalogTask.id
+    );
+
+    if (!existingTask) {
+        migratedTasks.push(clone(catalogTask));
+        return;
+    }
+
+    if (!existingTask.custom) {
+        existingTask.name = catalogTask.name;
+        existingTask.xp = catalogTask.xp;
+    }
+});
+
+if (Number(parsed.schemaVersion) < 3) {
+    const newlyActiveTaskIds = [
+        "task-spazieren",
+        "task-sport",
+        "task-todo-oeffnen",
+        "task-todo-bearbeiten"
+    ];
+
+    migratedTasks.forEach((task) => {
+        if (newlyActiveTaskIds.includes(task.id)) {
+            task.active = true;
+        }
+
+        if (/kreatin|creatin|vitamin\s*c/i.test(task.name)) {
+            task.active = false;
+        }
+    });
+}
 
         return {
+            schemaVersion: 3,
+            
             dailyGoal:
                 Number(parsed.dailyGoal) > 0
                     ? Math.round(Number(parsed.dailyGoal))
@@ -185,10 +297,9 @@ function getTodayXp() {
 }
 
 function getTotalXp() {
-    return Math.max(
-        0,
-        state.history.reduce((sum, entry) => sum + Number(entry.xp), 0)
-    );
+    return state.history.reduce((sum, entry) => {
+        return sum + Number(entry.xp);
+    }, 0);
 }
 
 function getActiveTasks() {
@@ -301,6 +412,25 @@ function renderTodayTasks() {
 
         elements.todayTaskGrid.appendChild(button);
     });
+const addTaskTile = document.createElement("button");
+addTaskTile.type = "button";
+addTaskTile.className = "task-tile add-task-tile";
+
+const addIcon = document.createElement("span");
+addIcon.className = "task-emoji";
+addIcon.textContent = "+";
+
+const addLabel = document.createElement("span");
+addLabel.className = "task-tile-name";
+addLabel.textContent = "Neue Aufgabe hinzufügen";
+
+addTaskTile.append(addIcon, addLabel);
+
+addTaskTile.addEventListener("click", () => {
+    openTaskDialog();
+});
+
+elements.todayTaskGrid.appendChild(addTaskTile);
 }
 
 function renderHistory() {
@@ -375,21 +505,45 @@ function createManageItem(task, active) {
     toggleButton.className = active
         ? "small-button muted-button"
         : "small-button activate-button";
-    toggleButton.textContent = active ? "Ausblenden" : "+ Aktivieren";
-    toggleButton.addEventListener("click", () => toggleTask(task.id));
+
+    toggleButton.textContent = active
+        ? "Ausblenden"
+        : "+ Aktivieren";
+
+    toggleButton.addEventListener("click", () => {
+        toggleTask(task.id);
+    });
 
     const editButton = document.createElement("button");
     editButton.type = "button";
     editButton.className = "small-button";
     editButton.textContent = "Bearbeiten";
-    editButton.addEventListener("click", () => openTaskDialog(task.id));
+
+    editButton.addEventListener("click", () => {
+        openTaskDialog(task.id);
+    });
 
     actions.append(toggleButton, editButton);
+
+    if (!active && task.custom) {
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "small-button delete-small-button";
+    deleteButton.textContent = "Löschen";
+
+    deleteButton.addEventListener("click", () => {
+        permanentlyDeleteTask(task.id);
+    });
+
+    actions.append(deleteButton, toggleButton, editButton);
+} else {
+    actions.append(toggleButton, editButton);
+}
+
     item.append(text, actions);
 
     return item;
 }
-
 function renderManagement() {
     const activeTasks = getActiveTasks();
     const inactiveTasks = getInactiveTasks();
@@ -461,11 +615,39 @@ function resetToday() {
 }
 
 function toggleTask(taskId) {
+    
+    
     const task = state.tasks.find((item) => item.id === taskId);
 
     if (!task) return;
 
     task.active = !task.active;
+    saveState();
+    render();
+}
+
+function permanentlyDeleteTask(taskId) {
+    const task = state.tasks.find((item) => {
+        return item.id === taskId;
+    });
+
+    if (!task || !task.custom) {
+        return;
+    }
+
+    const confirmed = window.confirm(
+        `„${task.name}“ wirklich endgültig löschen?\n\n` +
+        "Bereits vorhandene Historieneinträge bleiben erhalten."
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    state.tasks = state.tasks.filter((item) => {
+        return item.id !== taskId;
+    });
+
     saveState();
     render();
 }
@@ -606,10 +788,8 @@ elements.dailyGoalInput.addEventListener("keydown", (event) => {
 elements.gridSizeTwo.addEventListener("change", () => setGridSize(2));
 elements.gridSizeThree.addEventListener("change", () => setGridSize(3));
 
-elements.taskDialog.addEventListener("click", (event) => {
-    if (event.target === elements.taskDialog) {
-        closeTaskDialog();
-    }
+elements.taskXpInput.addEventListener("focus", () => {
+    elements.taskXpInput.select();
 });
 
 render();

@@ -309,6 +309,35 @@ h2 {
     color: var(--negative);
 }
 
+.add-task-tile {
+    border: 2px dashed #b8c2d6;
+    background: transparent;
+    color: var(--primary);
+}
+
+.add-task-tile:hover {
+    background: #eef3ff;
+}
+
+.add-task-tile .task-emoji {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 44px;
+    height: 44px;
+
+    border-radius: 50%;
+    background: #e8ebf9;
+
+    font-size: 30px;
+    font-weight: 400;
+}
+
+.add-task-tile .task-tile-name {
+    min-height: auto;
+}
+
 .action-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -433,6 +462,12 @@ h2 {
     cursor: pointer;
     font-size: 12px;
     font-weight: 650;
+}
+
+.delete-small-button {
+    border-color: #f0b7b2;
+    background: var(--negative-soft);
+    color: var(--negative);
 }
 
 .activate-button {
