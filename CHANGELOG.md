@@ -1,5 +1,20 @@
 # LifeXP – Änderungsverlauf
 
+
+## v0.3 – Navigation, Karten und Aktivitätskatalog
+
+### Neu
+- Navigation zwischen Heute, Aktivitäten und Statistiken
+- Aktivitätskatalog
+- Aktivitäten ein- und ausblenden
+- Eigene Aktivitäten dauerhaft löschen
+- Bearbeiten von Aktivitäten
+- GitHub-Repository erstellt
+- Cloudflare-Deployment eingerichtet
+- PWA vorbereitet
+- iPhone-Home-Screen-Unterstützung
+- App-Icons hinzugefügt
+
 ## v0.2 – Erste spielbare Version
 
 ### Neu

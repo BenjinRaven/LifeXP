@@ -15,56 +15,133 @@ Bereits vorhanden:
 - Tagesreset
 - Gesamt-XP
 
-## v0.3 – Kompaktere Bedienung
+# LifeXP – Roadmap
 
-- [ ] quadratische Aktivitätskarten
-- [ ] zwei Karten pro Reihe
-- [ ] optionale Ansicht mit drei Karten pro Reihe
-- [ ] Umschalter für große und kompakte Darstellung
-- [ ] eigener Bereich zur Aktivitätenverwaltung
-- [ ] Aktivitätskatalog
-- [ ] Aktivitäten aktivieren und deaktivieren
-- [ ] vorhandene Aktivitäten nicht endgültig löschen
-- [ ] selbst erstellte Aktivitäten weiter bearbeiten
+## Aktueller Stand: v0.3
 
-## v0.4 – Tages- und Wochenlogik
+Bereits vorhanden:
 
-- [ ] zuverlässiger automatischer Tageswechsel
-- [ ] Wochenansicht
-- [ ] Tagesziel pro Tag speichern
-- [ ] erfolgreiche Tage visuell markieren
-- [ ] verfehlte Tage markieren
-- [ ] einstellbare Strafe bei verfehltem Tagesziel
-- [ ] Strafe nur von Gesamt-XP abziehen
-- [ ] jeder neue Tag startet bei 0 Tages-XP
+- ✅ positive und negative XP
+- ✅ veränderbares Tagesziel
+- ✅ Gesamt-XP
+- ✅ Aktivitäten hinzufügen
+- ✅ Aktivitäten bearbeiten
+- ✅ Aktivitäten ausblenden
+- ✅ eigene Aktivitäten dauerhaft löschen
+- ✅ Aktivitätskatalog
+- ✅ lokale Speicherung
+- ✅ Historie
+- ✅ mehrfaches Rückgängig
+- ✅ Tagesreset
+- ✅ Navigation
+- ✅ Heute / Aktivitäten / Statistik
+- ✅ GitHub Repository
+- ✅ Cloudflare Deployment
+- ✅ PWA vorbereitet
 
-## v0.5 – Statistik und Sicherung
+---
 
-- [ ] Tagesstatistik
-- [ ] Wochenstatistik
-- [ ] Monatsstatistik
-- [ ] häufigste Aktivitäten
-- [ ] positive und negative XP getrennt anzeigen
+# v0.4 – Bedienbarkeit
+
+## Bedienkomfort
+
+- [ ] Scrollposition nach Änderungen beibehalten
+- [ ] Kein automatisches Springen nach oben
+- [ ] Dialoge angenehmer gestalten
+- [ ] Verbesserte Eingabefelder
+- [ ] Kleine Animationen beim Klicken
+
+## Aktivitäten
+
+- [ ] Drag & Drop
+- [ ] Reihenfolge dauerhaft speichern
+- [ ] Reihenfolge auf "Heute" übernehmen
+- [ ] Besseres Hinzufügen neuer Aufgaben
+- [ ] Automatische Emoji-Vorschläge
+
+## Statistik
+
+- [ ] Erstes Wochen-Säulendiagramm
+- [ ] Montag bis Sonntag
+- [ ] Tages-XP als Säulen
+- [ ] Grün = Tagesziel erreicht
+- [ ] Rot = Tagesziel verfehlt
+
+---
+
+# v0.5 – Dashboard
+
+## Heute-Seite
+
+- [ ] Sticky-Leiste beim Scrollen
+- [ ] Aktuelle XP immer sichtbar
+- [ ] Fortschrittsbalken immer sichtbar
+
+## Statistik
+
+- [ ] Monatsübersicht
+- [ ] Durchschnittliche XP
+- [ ] Erfolgsquote
 - [ ] Rekordtag
-- [ ] Export als Backupdatei
-- [ ] Import einer Backupdatei
+- [ ] Aktivste Woche
 
-## v0.6 – Motivation
+---
 
-- [ ] optionales Levelsystem
-- [ ] Fortschritt bis zum nächsten Level
-- [ ] dezente Animationen
-- [ ] optionale Sounds
-- [ ] Belohnungssystem
-- [ ] Achievements
-- [ ] Streaks
+# v0.6 – Motivation
 
-## Später
+## Motivation
 
-- [ ] Cloud-Synchronisierung
-- [ ] Benutzerkonten
-- [ ] gemeinsame Nutzung auf mehreren Geräten
-- [ ] iPhone-Widget
-- [ ] Apple-Health-Anbindung
-- [ ] Android-Version
-- [ ] App-Store-Version
+- [ ] Levelsystem
+- [ ] XP bis zum nächsten Level
+- [ ] Dezente Animationen
+- [ ] Optionales haptisches Feedback
+- [ ] Optionaler Sound
+- [ ] Erfolgsserien (Streaks)
+
+## Konsequenz
+
+- [ ] Einstellbare Straf-XP
+- [ ] Erinnerung an verfehlte Tagesziele
+- [ ] Konsequenz-Modus
+- [ ] Motivationsmodus
+
+---
+
+# v0.7 – Kategorien
+
+- [ ] Sport
+- [ ] Gesundheit
+- [ ] Ordnung
+- [ ] Produktivität
+- [ ] Ernährung
+- [ ] Sonstiges
+
+---
+
+# v0.8 – Datensicherung
+
+- [ ] Export
+- [ ] Import
+- [ ] Backup-Datei
+- [ ] Cloud-Synchronisation
+
+---
+
+# v0.9 – Erweiterungen
+
+- [ ] Widget
+- [ ] Push-Benachrichtigungen
+- [ ] Apple Health
+- [ ] Google Fit
+- [ ] Apple Watch
+- [ ] Android Wear
+
+---
+
+# v1.0 – Release
+
+- [ ] Finale Oberfläche
+- [ ] Performance optimieren
+- [ ] Fehlerbehebung
+- [ ] App Store Vorbereitung
+- [ ] Google Play Vorbereitung

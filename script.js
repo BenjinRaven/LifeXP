@@ -336,7 +336,7 @@ function renderNavigation() {
         );
     });
 
-    window.scrollTo({ top: 0, behavior: "instant" });
+    
 }
 
 function openView(viewName) {
