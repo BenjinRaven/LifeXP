@@ -793,3 +793,6 @@ elements.taskXpInput.addEventListener("focus", () => {
 });
 
 render();
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js");
+}
