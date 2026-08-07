@@ -2252,17 +2252,33 @@ function moveGridPlaceholderByOverlap(placeholder, deltaX = 0, deltaY = 0) {
     let insertAfter;
 
     if (primarilyVertical) {
-        insertAfter = targetCenterY < draggedCenterY;
+        /*
+         * ZIEL OBERHALB:
+         * Der Platzhalter muss VOR die Zielkachel.
+         * Sonst ergibt das CSS-Grid aus der DOM-Reihenfolge zuerst
+         * den linken Slot der nächsten Zeile – genau der bisherige Fehler.
+         *
+         * ZIEL UNTERHALB:
+         * Der Platzhalter kommt NACH die Zielkachel.
+         */
+        insertAfter = targetCenterY > draggedCenterY;
     } else if (primarilyHorizontal) {
-        insertAfter = targetCenterX < draggedCenterX;
+        /*
+         * ZIEL LINKS:
+         * VOR die Zielkachel.
+         *
+         * ZIEL RECHTS:
+         * NACH die Zielkachel.
+         */
+        insertAfter = targetCenterX > draggedCenterX;
     } else {
         const verticalDistance = Math.abs(targetCenterY - draggedCenterY);
         const horizontalDistance = Math.abs(targetCenterX - draggedCenterX);
 
         if (horizontalDistance > verticalDistance) {
-            insertAfter = targetCenterX < draggedCenterX;
+            insertAfter = targetCenterX > draggedCenterX;
         } else {
-            insertAfter = targetCenterY < draggedCenterY;
+            insertAfter = targetCenterY > draggedCenterY;
         }
     }
 
