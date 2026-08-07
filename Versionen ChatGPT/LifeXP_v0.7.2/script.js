@@ -2125,199 +2125,90 @@ function movePlaceholderBeforeOrAfter(target, clientY, placeholder) {
     }
 }
 
-let todayGridDragModel = null;
+function moveGridPlaceholderByOverlap(placeholder, deltaX = 0, deltaY = 0) {
+    if (!placeholder || !liveDragState?.item || !elements.todayTaskGrid) return;
 
-function createTodayGridDragModel(taskId, pointerX = null, pointerY = null) {
-    if (!elements.todayTaskGrid) return null;
+    const draggedRect = liveDragState.item.getBoundingClientRect();
+    const draggedCenterX = draggedRect.left + draggedRect.width / 2;
+    const draggedCenterY = draggedRect.top + draggedRect.height / 2;
 
-    const tiles = Array.from(
+    const candidates = Array.from(
         elements.todayTaskGrid.querySelectorAll(".task-tile[data-task-id]")
-    );
+    ).filter((item) => item !== liveDragState.item);
 
-    if (!tiles.length) return null;
+    if (!candidates.length) return;
 
-    const draggedIndex = tiles.findIndex((tile) => tile.dataset.taskId === taskId);
-    if (draggedIndex < 0) return null;
+    const primarilyHorizontal = Math.abs(deltaX) > Math.abs(deltaY) * 0.85;
+    const primarilyVertical = Math.abs(deltaY) > Math.abs(deltaX) * 0.85;
 
-    const rects = tiles.map((tile) => tile.getBoundingClientRect());
-    const cols = Math.max(1, Math.min(Number(state.gridSize) || 2, rects.length));
+    let bestTarget = null;
+    let bestScore = 0;
 
-    const xCenters = Array.from({ length: cols }, (_, col) => {
-        const rect = rects[col] || rects[0];
-        return rect.left + rect.width / 2;
+    candidates.forEach((target) => {
+        const rect = target.getBoundingClientRect();
+
+        const overlapX = Math.max(
+            0,
+            Math.min(draggedRect.right, rect.right) -
+                Math.max(draggedRect.left, rect.left)
+        );
+
+        const overlapY = Math.max(
+            0,
+            Math.min(draggedRect.bottom, rect.bottom) -
+                Math.max(draggedRect.top, rect.top)
+        );
+
+        const xRatio = overlapX / Math.max(1, Math.min(draggedRect.width, rect.width));
+        const yRatio = overlapY / Math.max(1, Math.min(draggedRect.height, rect.height));
+
+        let score;
+
+        if (primarilyHorizontal) {
+            // Bei Links/Rechts-Bewegung zählt vor allem die horizontale
+            // Überdeckung. Eine leichte vertikale Abweichung ist erlaubt.
+            score = yRatio >= 0.34 ? xRatio : 0;
+        } else if (primarilyVertical) {
+            // Bei Hoch/Runter-Bewegung bleibt die Karte bevorzugt in ihrer
+            // Spalte. Dadurch springt eine rechte Kachel nicht zuerst nach links.
+            score = xRatio >= 0.34 ? yRatio : 0;
+        } else {
+            // Diagonale Bewegung: reale Flächenüberdeckung entscheidet.
+            score = Math.sqrt(xRatio * yRatio);
+        }
+
+        if (score > bestScore) {
+            bestScore = score;
+            bestTarget = target;
+        }
     });
 
-    const rows = Math.ceil(rects.length / cols);
-    const yCenters = Array.from({ length: rows }, (_, row) => {
-        const rect = rects[Math.min(row * cols, rects.length - 1)];
-        return rect.top + rect.height / 2;
-    });
+    // Schon ab ungefähr einem Drittel Überdeckung wird der neue Slot aktiv.
+    // Vorher waren gefühlt etwa 50 % nötig.
+    if (!bestTarget || bestScore < 0.33) return;
 
-    const draggedRect = rects[draggedIndex];
+    const targetRect = bestTarget.getBoundingClientRect();
+    const targetCenterX = targetRect.left + targetRect.width / 2;
+    const targetCenterY = targetRect.top + targetRect.height / 2;
+    const lastCandidate = candidates[candidates.length - 1];
 
-    return {
-        taskId,
-        cols,
-        total: rects.length,
-        xCenters,
-        yCenters,
-        currentIndex: draggedIndex,
-        currentRow: Math.floor(draggedIndex / cols),
-        currentCol: draggedIndex % cols,
-        width: draggedRect.width,
-        height: draggedRect.height,
-        pointerOffsetX:
-            Number.isFinite(pointerX) ? pointerX - draggedRect.left : draggedRect.width / 2,
-        pointerOffsetY:
-            Number.isFinite(pointerY) ? pointerY - draggedRect.top : draggedRect.height / 2
-    };
-}
+    // Normalfall: die gezogene Karte übernimmt exakt den Slot der Kachel,
+    // die sie zu mindestens einem Drittel überdeckt.
+    //
+    // Nur hinter der letzten Kachel darf der Platzhalter "danach" landen,
+    // damit man weiterhin sauber ans Listenende ziehen kann.
+    const movingPastLast =
+        bestTarget === lastCandidate &&
+        (
+            (primarilyHorizontal && deltaX > 0 && draggedCenterX > targetCenterX) ||
+            (primarilyVertical && deltaY > 0 && draggedCenterY > targetCenterY)
+        );
 
-function getDraggedCardCenter(pointerX = null, pointerY = null) {
-    if (liveDragState?.item) {
-        const rect = liveDragState.item.getBoundingClientRect();
-        return {
-            x: rect.left + rect.width / 2,
-            y: rect.top + rect.height / 2
-        };
-    }
-
-    if (
-        todayGridDragModel &&
-        Number.isFinite(pointerX) &&
-        Number.isFinite(pointerY)
-    ) {
-        return {
-            x:
-                pointerX -
-                todayGridDragModel.pointerOffsetX +
-                todayGridDragModel.width / 2,
-            y:
-                pointerY -
-                todayGridDragModel.pointerOffsetY +
-                todayGridDragModel.height / 2
-        };
-    }
-
-    return null;
-}
-
-function moveTodayGridNodeToIndex(node, desiredIndex) {
-    if (!node || !elements.todayTaskGrid) return;
-
-    const siblings = Array.from(elements.todayTaskGrid.children).filter(
-        (child) =>
-            child !== node &&
-            (
-                child.matches?.(".task-tile[data-task-id]") ||
-                child.classList?.contains("today-placeholder")
-            )
-    );
-
-    const index = Math.max(0, Math.min(desiredIndex, siblings.length));
-
-    if (index >= siblings.length) {
-        elements.todayTaskGrid.appendChild(node);
+    if (movingPastLast) {
+        bestTarget.after(placeholder);
     } else {
-        elements.todayTaskGrid.insertBefore(node, siblings[index]);
+        bestTarget.before(placeholder);
     }
-}
-
-function updateTodayGridVisualSlot(node, pointerX = null, pointerY = null) {
-    if (!node || !todayGridDragModel) return;
-
-    const center = getDraggedCardCenter(pointerX, pointerY);
-    if (!center) return;
-
-    const model = todayGridDragModel;
-
-    // Die Umschaltung erfolgt schon nach 28 % des Weges zum Nachbar-Slot.
-    // Dadurch reagieren Links/Rechts und Hoch/Runter deutlich früher.
-    const triggerRatio = 0.28;
-
-    let row = model.currentRow;
-    let col = model.currentCol;
-
-    // Spalte unabhängig von der Zeile bestimmen.
-    // Das verhindert den alten Zwischenstep "erst links, dann hoch".
-    let changed = true;
-    while (changed) {
-        changed = false;
-
-        if (col > 0) {
-            const currentX = model.xCenters[col];
-            const previousX = model.xCenters[col - 1];
-            const threshold =
-                currentX - (currentX - previousX) * triggerRatio;
-
-            if (center.x <= threshold) {
-                col -= 1;
-                changed = true;
-                continue;
-            }
-        }
-
-        if (col < model.xCenters.length - 1) {
-            const currentX = model.xCenters[col];
-            const nextX = model.xCenters[col + 1];
-            const threshold =
-                currentX + (nextX - currentX) * triggerRatio;
-
-            if (center.x >= threshold) {
-                col += 1;
-                changed = true;
-            }
-        }
-    }
-
-    // Zeile ebenfalls unabhängig bestimmen.
-    changed = true;
-    while (changed) {
-        changed = false;
-
-        if (row > 0) {
-            const currentY = model.yCenters[row];
-            const previousY = model.yCenters[row - 1];
-            const threshold =
-                currentY - (currentY - previousY) * triggerRatio;
-
-            if (center.y <= threshold) {
-                row -= 1;
-                changed = true;
-                continue;
-            }
-        }
-
-        if (row < model.yCenters.length - 1) {
-            const currentY = model.yCenters[row];
-            const nextY = model.yCenters[row + 1];
-            const threshold =
-                currentY + (nextY - currentY) * triggerRatio;
-
-            if (center.y >= threshold) {
-                row += 1;
-                changed = true;
-            }
-        }
-    }
-
-    let desiredIndex = row * model.cols + col;
-
-    // In einer unvollständigen letzten Zeile darf nicht in einen nicht
-    // existierenden Slot gesprungen werden.
-    desiredIndex = Math.min(desiredIndex, model.total - 1);
-
-    if (desiredIndex === model.currentIndex) return;
-
-    moveTodayGridNodeToIndex(node, desiredIndex);
-
-    model.currentIndex = desiredIndex;
-    model.currentRow = Math.floor(desiredIndex / model.cols);
-    model.currentCol = desiredIndex % model.cols;
-}
-
-function clearTodayGridDragModel() {
-    todayGridDragModel = null;
 }
 function clearDeactivateDropIndicator() {
     manageDeactivateDropActive = false;
@@ -2823,31 +2714,9 @@ function syncActiveOrderFromManageDom() {
     applyActiveOrder(activeIds);
 }
 
-if (elements.todayTaskGrid) {
-    elements.todayTaskGrid.addEventListener("dragover", (event) => {
-        if (!draggedTodayTaskId) return;
-        event.preventDefault();
-
-        const draggedItem = elements.todayTaskGrid.querySelector(
-            `.task-tile[data-task-id="${draggedTodayTaskId}"]`
-        );
-
-        updateTodayGridVisualSlot(
-            draggedItem,
-            event.clientX,
-            event.clientY
-        );
-    });
-}
-
 function setupTodayDrag(item, handle, taskId) {
     item.addEventListener("dragstart", (event) => {
         draggedTodayTaskId = taskId;
-        todayGridDragModel = createTodayGridDragModel(
-            taskId,
-            event.clientX,
-            event.clientY
-        );
         item.classList.add("dragging");
         item.dataset.justDragged = "true";
         event.dataTransfer.effectAllowed = "move";
@@ -2858,7 +2727,6 @@ function setupTodayDrag(item, handle, taskId) {
         item.classList.remove("dragging");
         syncActiveOrderFromTodayDom();
         draggedTodayTaskId = null;
-        clearTodayGridDragModel();
         renderManagement();
 
         setTimeout(() => {
@@ -2867,18 +2735,14 @@ function setupTodayDrag(item, handle, taskId) {
     });
 
     item.addEventListener("dragover", (event) => {
-        if (!draggedTodayTaskId) return;
+        if (!draggedTodayTaskId || draggedTodayTaskId === taskId) return;
         event.preventDefault();
 
         const draggedItem = elements.todayTaskGrid.querySelector(
             `.task-tile[data-task-id="${draggedTodayTaskId}"]`
         );
 
-        updateTodayGridVisualSlot(
-            draggedItem,
-            event.clientX,
-            event.clientY
-        );
+        moveDraggedGridItem(item, event.clientX, event.clientY, draggedItem);
     });
 
     // Mobil: Tippen bleibt ein normaler Aktivitäts-Klick. Wird die Karte kurz
@@ -2913,11 +2777,6 @@ function setupTodayDrag(item, handle, taskId) {
             touchDraggedTodayItem = item;
             touchDragStarted = true;
             item.dataset.justDragged = "true";
-            todayGridDragModel = createTodayGridDragModel(
-                taskId,
-                startX,
-                startY
-            );
             item.classList.add("dragging");
             document.body.classList.add("live-reordering");
             beginLiveCardDrag(item, startX, startY, "today-placeholder");
@@ -2942,10 +2801,10 @@ function setupTodayDrag(item, handle, taskId) {
 
         moveLiveCardDrag(touch.clientX, touch.clientY);
 
-        updateTodayGridVisualSlot(
+        moveGridPlaceholderByOverlap(
             getLiveDragPlaceholder(),
-            touch.clientX,
-            touch.clientY
+            deltaX,
+            deltaY
         );
 
         lastDragX = touch.clientX;
@@ -2974,7 +2833,6 @@ function setupTodayDrag(item, handle, taskId) {
 
         touchDraggedTodayItem = null;
         draggedTodayTaskId = null;
-        clearTodayGridDragModel();
         touchDragStarted = false;
     };
 
@@ -2988,7 +2846,6 @@ function setupTodayDrag(item, handle, taskId) {
         }
         touchDraggedTodayItem = null;
         draggedTodayTaskId = null;
-        clearTodayGridDragModel();
         touchDragStarted = false;
     }, { passive: true });
 
@@ -2999,6 +2856,26 @@ function moveDraggedItemBeforeOrAfter(target, clientY, draggedItem) {
 
     const rect = target.getBoundingClientRect();
     const insertAfter = clientY > rect.top + rect.height / 2;
+
+    if (insertAfter) {
+        target.after(draggedItem);
+    } else {
+        target.before(draggedItem);
+    }
+}
+
+function moveDraggedGridItem(target, clientX, clientY, draggedItem) {
+    if (!draggedItem || target === draggedItem) return;
+
+    const rect = target.getBoundingClientRect();
+    const horizontalRatio = (clientX - rect.left) / Math.max(rect.width, 1);
+    const verticalRatio = (clientY - rect.top) / Math.max(rect.height, 1);
+
+    const insertAfter =
+        verticalRatio > 0.55 ||
+        (verticalRatio >= 0.25 &&
+            verticalRatio <= 0.55 &&
+            horizontalRatio > 0.5);
 
     if (insertAfter) {
         target.after(draggedItem);

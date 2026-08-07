@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover"
+    >
+<meta name="theme-color" content="#121212">
+
+<title>LifeXP</title>
+
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LXP">
+
+
+</head>
+
+<body>
+    <main class="app">
+        <section id="todayView" class="view active-view">
+            <header class="topbar">
+                <div class="brand-heading">
+                    <img
+                        class="header-app-icon"
+                        src="apple-touch-icon.png"
+                        alt=""
+                        aria-hidden="true"
+                    >
+                    <div>
+                        <p class="eyebrow">LifeXP</p>
+                        <h1 id="todayTitle">Heute</h1>
+                        <p id="currentDate" class="current-date"></p>
+                    </div>
+                </div>
+
+                <div class="total-card">
+                    <span>Gesamt</span>
+                    <strong id="totalXp">0 XP</strong>
+                </div>
+            </header>
+
+            <section id="retroDayBanner" class="retro-day-banner" hidden>
+                <div>
+                    <strong id="retroDayBannerTitle">Vergangenen Tag nachtragen</strong>
+                    <span id="retroDayBannerText"></span>
+                </div>
+                <button id="returnToTodayButton" type="button">
+                    Zurück zu Heute
+                </button>
+            </section>
+
+            <section id="goalCard" class="goal-card">
+                <div class="goal-header">
+                    <div>
+                        <p class="section-label">Tagesziel</p>
+                        <p class="goal-value">
+                            <span id="todayXp">0</span>
+                            <span class="goal-divider">/</span>
+                            <span id="dailyGoal">50</span>
+                            XP
+                        </p>
+                    </div>
+
+                    <div id="goalStatus" class="goal-status">Noch 50 XP</div>
+                </div>
+
+                <div class="progress-track">
+                    <div id="progressBar" class="progress-bar"></div>
+                </div>
+            </section>
+
+            <section class="section">
+                <div class="section-heading">
+                    <div>
+                        <p class="section-label">Schnelleintrag</p>
+                        <h2>Aktivitäten</h2>
+                    </div>
+
+                    <button
+                        class="text-button"
+                        type="button"
+                        data-open-view="activities"
+                    >
+                        Verwalten
+                    </button>
+                </div>
+
+                <div id="todayTaskGrid" class="task-grid grid-two"></div>
+
+                <p id="emptyTodayTasks" class="empty-message" hidden>
+                    Aktiviere unter „Aktivitäten“ deine ersten Aufgaben.
+                </p>
+            </section>
+
+            <section class="action-row">
+                <button
+                    id="undoButton"
+                    class="secondary-button"
+                    type="button"
+                    disabled
+                >
+                    ↶ Rückgängig
+                </button>
+
+                <button
+                    id="resetTodayButton"
+                    class="danger-button"
+                    type="button"
+                    disabled
+                >
+                    Heute zurücksetzen
+                </button>
+            </section>
+
+            <section class="section history-section">
+                <div class="section-heading">
+                    <div>
+                        <p id="historySectionLabel" class="section-label">Heutiger Verlauf</p>
+                        <h2 id="historyTitle">Historie</h2>
+                    </div>
+
+                    <span id="historyCount" class="count-badge">0 Einträge</span>
+                </div>
+
+                <div id="historyList" class="history-list"></div>
+
+                <p id="emptyHistoryMessage" class="empty-message">
+                    Heute wurde noch nichts eingetragen.
+                </p>
+            </section>
+        </section>
+
+        <section id="statsView" class="view">
+            <header class="page-header stats-header">
+                <div>
+                    <p class="eyebrow">LifeXP</p>
+                    <h1>Statistik</h1>
+                    <p class="page-subtitle">
+                        Dein Fortschritt auf einen Blick.
+                    </p>
+                </div>
+
+                <div class="stats-total-card">
+                    <span>Gesamt-XP</span>
+                    <strong id="statsHeaderTotalXp">0 XP</strong>
+                </div>
+            </header>
+
+            <section class="stats-card">
+                <div class="section-heading stats-heading">
+                    <div>
+                        <p class="section-label">Diese Woche</p>
+                        <h2>XP pro Tag</h2>
+                    </div>
+                    <span id="weekRangeLabel" class="count-badge"></span>
+                </div>
+
+                <div class="week-summary">
+                    <div>
+                        <span>Wochen-XP</span>
+                        <strong id="weekTotalXp">0 XP</strong>
+                    </div>
+                    <div>
+                        <span>Ø Woche</span>
+                        <strong id="weekAverageXp">0 XP</strong>
+                    </div>
+                </div>
+
+                <div class="weekly-chart-shell">
+                    <div id="weeklyChartYAxis" class="weekly-chart-y-axis"></div>
+                    <div id="weeklyChart" class="weekly-chart" aria-label="XP-Säulendiagramm Montag bis Sonntag"></div>
+                </div>
+
+                <div class="chart-legend">
+                    <span><i class="legend-dot success"></i> Tagesziel erreicht</span>
+                    <span><i class="legend-dot missed"></i> Unter Tagesziel</span>
+                </div>
+            </section>
+
+            <section class="stats-card month-card">
+                <div class="section-heading">
+                    <div>
+                        <p class="section-label">Monatsübersicht</p>
+                        <h2 id="monthTitle">Monat</h2>
+                    </div>
+                </div>
+
+                <div class="month-weekdays" aria-hidden="true">
+                    <span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span>
+                </div>
+                <div id="monthCalendar" class="month-calendar"></div>
+
+                <div class="chart-legend month-legend">
+                    <span><i class="legend-dot success"></i> Ziel erreicht</span>
+                    <span><i class="legend-dot missed"></i> Ziel verfehlt</span>
+                    <span><i class="legend-dot neutral"></i> Noch nicht gewertet</span>
+                </div>
+            </section>
+
+            <div class="metric-grid stats-metrics">
+                <article class="metric-card">
+                    <span>Heute</span>
+                    <strong id="statsTodayXp">0 XP</strong>
+                </article>
+
+                <article class="metric-card">
+                    <span>Gesamt-XP</span>
+                    <strong id="statsTotalXp">0 XP</strong>
+                </article>
+
+                <article class="metric-card">
+                    <span>🔥 Laufende Serie</span>
+                    <strong id="statsCurrentStreak">0 Tage</strong>
+                </article>
+
+                <article class="metric-card">
+                    <span>🏆 Beste Serie</span>
+                    <strong id="statsBestStreak">0 Tage</strong>
+                </article>
+
+                <article class="metric-card">
+                    <span>7-Tage-Schnitt</span>
+                    <strong id="statsWeekAverage">0 XP</strong>
+                </article>
+
+                <article class="metric-card">
+                    <span>Monats-Schnitt</span>
+                    <strong id="statsMonthAverage">0 XP</strong>
+                </article>
+
+                <article class="metric-card">
+                    <span>Zielquote</span>
+                    <strong id="statsSuccessRate">0 %</strong>
+                </article>
+
+                <article class="metric-card">
+                    <span>Aktive Aktivitäten</span>
+                    <strong id="statsActiveTasks">0</strong>
+                </article>
+            </div>
+        </section>
+
+        <section id="activitiesView" class="view">
+            <header class="page-header with-action">
+                <div>
+                    <p class="eyebrow">LifeXP</p>
+                    <h1>Aktivitäten</h1>
+                    <p class="page-subtitle">
+                        Lege fest, welche Aufgaben auf deiner Startseite erscheinen.
+                    </p>
+                </div>
+
+                <button id="addTaskButton" class="primary-button" type="button">
+                    + Neu
+                </button>
+            </header>
+
+            <section class="section first-section">
+                <div class="section-heading">
+                    <div>
+                        <p class="section-label">Auf der Startseite</p>
+                        <h2>Aktiv</h2>
+                    </div>
+
+                    <span id="activeTaskCount" class="count-badge">0</span>
+                </div>
+
+                <div id="activeTaskList" class="manage-list"></div>
+
+                <p id="emptyActiveTasks" class="empty-message" hidden>
+                    Momentan ist keine Aktivität aktiv.
+                </p>
+            </section>
+
+            <section class="section">
+                <div class="section-heading">
+                    <div>
+                        <p class="section-label">Gespeicherter Katalog</p>
+                        <h2>Inaktiv</h2>
+                    </div>
+
+                    <span id="inactiveTaskCount" class="count-badge">0</span>
+                </div>
+
+                <div id="inactiveTaskList" class="manage-list"></div>
+
+                <p id="emptyInactiveTasks" class="empty-message" hidden>
+                    Alle gespeicherten Aktivitäten sind bereits aktiv.
+                </p>
+            </section>
+        </section>
+
+        <section id="settingsView" class="view">
+            <header class="page-header">
+                <p class="eyebrow">LifeXP</p>
+                <h1>Einstellungen</h1>
+            </header>
+
+            <section class="settings-card">
+                <p class="section-label">Tagesziel</p>
+                <h2>XP pro Tag</h2>
+
+                <div class="inline-form">
+                    <input
+                        id="dailyGoalInput"
+                        type="number"
+                        min="1"
+                        step="1"
+                        inputmode="numeric"
+                    >
+
+                    <button id="saveGoalButton" type="button">
+                        Speichern
+                    </button>
+                </div>
+            </section>
+
+            <section class="settings-card">
+                <p class="section-label">Tageswechsel</p>
+                <h2>Wann beginnt ein neuer Tag?</h2>
+
+                <div class="inline-form">
+                    <input
+                        id="dayResetInput"
+                        type="time"
+                        step="60"
+                    >
+
+                    <button id="saveDayResetButton" type="button">
+                        Speichern
+                    </button>
+                </div>
+
+                <p id="dayResetHint" class="settings-text settings-hint">
+                    Bis 03:59 Uhr zählen Aktivitäten noch zum Vortag.
+                </p>
+            </section>
+
+            <section class="settings-card">
+                <p class="section-label">Darstellung</p>
+                <h2>Kartengröße</h2>
+
+                <div class="choice-grid">
+                    <label class="choice-card">
+                        <input
+                            type="radio"
+                            name="gridSize"
+                            value="2"
+                            id="gridSizeTwo"
+                        >
+                        <span>
+                            <strong>Groß</strong>
+                            <small>2 Karten pro Reihe</small>
+                        </span>
+                    </label>
+
+                    <label class="choice-card">
+                        <input
+                            type="radio"
+                            name="gridSize"
+                            value="3"
+                            id="gridSizeThree"
+                        >
+                        <span>
+                            <strong>Kompakt</strong>
+                            <small>3 Karten pro Reihe</small>
+                        </span>
+                    </label>
+                </div>
+            </section>
+
+            <section class="settings-card">
+                <p class="section-label">Design</p>
+                <h2>Farbschema</h2>
+
+                <div class="theme-grid">
+                    <label class="theme-choice">
+                        <input type="radio" name="appTheme" value="dark" id="themeDark">
+                        <span class="theme-preview theme-preview-dark" aria-hidden="true">
+                            <i></i><i></i><i></i>
+                        </span>
+                        <span>
+                            <strong>Dark Neon</strong>
+                            <small>Dunkel und kontrastreich</small>
+                        </span>
+                    </label>
+                    <label class="theme-choice">
+                        <input type="radio" name="appTheme" value="classic" id="themeClassic">
+                        <span class="theme-preview theme-preview-classic" aria-hidden="true">
+                            <i></i><i></i><i></i>
+                        </span>
+                        <span>
+                            <strong>Classic Blue</strong>
+                            <small>Klar und neutral</small>
+                        </span>
+                    </label>
+                    <label class="theme-choice">
+                        <input type="radio" name="appTheme" value="cyber" id="themeCyber">
+                        <span class="theme-preview theme-preview-cyber" aria-hidden="true"><i></i><i></i><i></i></span>
+                        <span><strong>Cyber Lime</strong><small>Dunkel mit Neon-Grün</small></span>
+                    </label>
+                    <label class="theme-choice">
+                        <input type="radio" name="appTheme" value="cyan" id="themeCyan">
+                        <span class="theme-preview theme-preview-cyan" aria-hidden="true"><i></i><i></i><i></i></span>
+                        <span><strong>Neon Cyan</strong><small>Kühles dunkles Cyan</small></span>
+                    </label>
+                    <label class="theme-choice">
+                        <input type="radio" name="appTheme" value="midnight" id="themeMidnight">
+                        <span class="theme-preview theme-preview-midnight" aria-hidden="true"><i></i><i></i><i></i></span>
+                        <span><strong>Midnight Neon</strong><small>Fast schwarz mit Electric Blue</small></span>
+                    </label>
+                    <label class="theme-choice">
+                        <input type="radio" name="appTheme" value="ocean" id="themeOcean">
+                        <span class="theme-preview theme-preview-ocean" aria-hidden="true"><i></i><i></i><i></i></span>
+                        <span><strong>Deep Ocean</strong><small>Dunkles Petrol mit Türkis</small></span>
+                    </label>
+                    <label class="theme-choice">
+                        <input type="radio" name="appTheme" value="obsidian" id="themeObsidian">
+                        <span class="theme-preview theme-preview-obsidian" aria-hidden="true"><i></i><i></i><i></i></span>
+                        <span><strong>Obsidian</strong><small>Schwarzgrau mit Silber</small></span>
+                    </label>
+                    <label class="theme-choice">
+                        <input type="radio" name="appTheme" value="forest" id="themeForest">
+                        <span class="theme-preview theme-preview-forest" aria-hidden="true">
+                            <i></i><i></i><i></i>
+                        </span>
+                        <span>
+                            <strong>Forest</strong>
+                            <small>Ruhig und natürlich</small>
+                        </span>
+                    </label>
+                    <label class="theme-choice">
+                        <input type="radio" name="appTheme" value="warm" id="themeWarm">
+                        <span class="theme-preview theme-preview-warm" aria-hidden="true">
+                            <i></i><i></i><i></i>
+                        </span>
+                        <span>
+                            <strong>Warm Sand</strong>
+                            <small>Weich und warm</small>
+                        </span>
+                    </label>
+                    <label class="theme-choice">
+                        <input type="radio" name="appTheme" value="violet" id="themeViolet">
+                        <span class="theme-preview theme-preview-violet" aria-hidden="true"><i></i><i></i><i></i></span>
+                        <span><strong>Neon Violet</strong><small>Dunkel mit kräftigem Violett</small></span>
+                    </label>
+                    <label class="theme-choice">
+                        <input type="radio" name="appTheme" value="ember" id="themeEmber">
+                        <span class="theme-preview theme-preview-ember" aria-hidden="true"><i></i><i></i><i></i></span>
+                        <span><strong>Neon Ember</strong><small>Dunkel mit Orange-Rot</small></span>
+                    </label>
+                    <label class="theme-choice">
+                        <input type="radio" name="appTheme" value="purple" id="themePurple">
+                        <span class="theme-preview theme-preview-purple" aria-hidden="true"><i></i><i></i><i></i></span>
+                        <span><strong>Cyber Purple</strong><small>Anthrazit mit Violett-Pink</small></span>
+                    </label>
+                    <label class="theme-choice">
+                        <input type="radio" name="appTheme" value="forestNight" id="themeForestNight">
+                        <span class="theme-preview theme-preview-forest-night" aria-hidden="true"><i></i><i></i><i></i></span>
+                        <span><strong>Forest Night</strong><small>Dunkelgrün mit Mint</small></span>
+                    </label>
+                    <label class="theme-choice">
+                        <input type="radio" name="appTheme" value="bordeaux" id="themeBordeaux">
+                        <span class="theme-preview theme-preview-bordeaux" aria-hidden="true"><i></i><i></i><i></i></span>
+                        <span><strong>Bordeaux Night</strong><small>Dunkles Weinrot mit Creme</small></span>
+                    </label>
+                    <label class="theme-choice">
+                        <input type="radio" name="appTheme" value="moonlight" id="themeMoonlight">
+                        <span class="theme-preview theme-preview-moonlight" aria-hidden="true"><i></i><i></i><i></i></span>
+                        <span><strong>Moonlight</strong><small>Blaugrau mit Eisblau</small></span>
+                    </label>
+                </div>
+
+                <div class="custom-theme-editor">
+                    <div class="custom-color-field">
+                        <label for="customBackgroundInput">Hintergrund</label>
+                        <input id="customBackgroundInput" type="color" value="#11151d">
+                    </div>
+                    <div class="custom-color-field">
+                        <label for="customSurfaceInput">Karten</label>
+                        <input id="customSurfaceInput" type="color" value="#1c2330">
+                    </div>
+                    <div class="custom-color-field">
+                        <label for="customAccentInput">Akzent</label>
+                        <input id="customAccentInput" type="color" value="#7b8cff">
+                    </div>
+
+                    <button id="applyCustomThemeButton" class="primary-button custom-theme-button" type="button">
+                        Eigene Farben anwenden
+                    </button>
+
+                    <div class="save-theme-row">
+                        <input
+                            id="customThemeNameInput"
+                            type="text"
+                            maxlength="28"
+                            placeholder="Name, z. B. Midnight Purple"
+                            autocomplete="off"
+                        >
+                        <button id="saveCustomThemeButton" class="secondary-button" type="button">
+                            Als Design speichern
+                        </button>
+                    </div>
+                </div>
+
+                <div id="savedThemeList" class="saved-theme-list"></div>
+            </section>
+
+            <section class="settings-card">
+                <p class="section-label">Datenspeicherung</p>
+                <h2>Lokaler Testbetrieb</h2>
+                <p class="settings-text">
+                    Deine Aktivitäten und XP werden derzeit nur in diesem Browser gespeichert.
+                </p>
+            </section>
+        </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Hauptnavigation">
+        <button class="nav-button active" type="button" data-view="today">
+            <span class="nav-icon">⌂</span>
+            <span>Heute</span>
+        </button>
+
+        <button class="nav-button" type="button" data-view="stats">
+            <span class="nav-icon">▥</span>
+            <span>Statistik</span>
+        </button>
+
+        <button class="nav-button" type="button" data-view="activities">
+            <span class="nav-icon">✓</span>
+            <span>Aktivitäten</span>
+        </button>
+
+        <button class="nav-button" type="button" data-view="settings">
+            <span class="nav-icon">⚙</span>
+            <span>Einstellungen</span>
+        </button>
+    </nav>
+
+    <dialog id="taskDialog" class="task-dialog">
+        <form id="taskForm" method="dialog">
+            <div class="dialog-heading">
+                <div>
+                    <p class="section-label">Aktivität</p>
+                    <h2 id="taskDialogTitle">Neue Aktivität</h2>
+                </div>
+
+                <button
+                    id="closeTaskDialogButton"
+                    class="icon-button"
+                    type="button"
+                    aria-label="Fenster schließen"
+                >
+                    ✕
+                </button>
+            </div>
+
+            <input id="editingTaskId" type="hidden">
+
+            <div class="emoji-name-row">
+                <label class="form-field emoji-field" for="taskEmojiInput">
+                    Emoji
+                    <div class="emoji-input-row">
+                        <input
+                            id="taskEmojiInput"
+                            class="emoji-input"
+                            type="text"
+                            maxlength="16"
+                            value="✨"
+                            autocomplete="off"
+                            aria-label="Emoji der Aktivität"
+                        >
+                        <button id="suggestEmojiButton" class="small-button" type="button">Vorschlagen</button>
+                    </div>
+                </label>
+
+                <label class="form-field name-field" for="taskNameInput">
+                    Name
+                    <input
+                        id="taskNameInput"
+                        type="text"
+                        maxlength="48"
+                        placeholder="Zum Beispiel: Joggen"
+                        autocomplete="off"
+                        required
+                    >
+                </label>
+            </div>
+
+            <label class="form-field" for="taskXpInput">
+                XP-Wert
+                <input
+                    id="taskXpInput"
+                    type="number"
+                    step="1"
+                    value="10"
+                    inputmode="numeric"
+                    required
+                >
+            </label>
+
+            <label class="repeatable-option" for="taskRepeatableInput">
+                <input
+                    id="taskRepeatableInput"
+                    type="checkbox"
+                >
+                <span>
+                    <strong>Wiederholbare Aktivität</strong>
+                    <small>Kann mehrmals am selben Tag XP geben.</small>
+                </span>
+            </label>
+
+            <p class="form-help">
+                Standardmäßig kann eine Aktivität nur einmal pro LifeXP-Tag gewertet werden.
+                LifeXP schlägt anhand des Namens automatisch ein Emoji vor; du kannst es jederzeit ändern.
+            </p>
+
+            <div class="dialog-actions">
+                <button
+                    id="cancelTaskButton"
+                    class="secondary-button"
+                    type="button"
+                >
+                    Abbrechen
+                </button>
+
+                <button class="primary-button" type="submit">
+                    Speichern
+                </button>
+            </div>
+
+            <button
+                id="deleteCustomTaskButton"
+                class="delete-link"
+                type="button"
+                hidden
+            >
+                Aktivität endgültig löschen
+            </button>
+        </form>
+    </dialog>
+
+    <script src="script.js"></script>
+</body>
+</html>

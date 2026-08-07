@@ -3560,19 +3560,3 @@ body.retro-entry-mode #todayView .goal-card {
     background: color-mix(in srgb, var(--primary) 9%, var(--surface));
     opacity: 0.82;
 }
-
-
-/* =========================================================
-   LifeXP v0.7.3 – visuelles Slot-Drag im Heute-Grid
-   ========================================================= */
-
-/* Reordering reagiert früher; die optische Bewegung der übrigen Tiles
-   wird bewusst kurz gehalten, damit sich der neue Slot direkt anfühlt. */
-body.live-reordering .task-grid .task-tile:not(.live-floating-card),
-body.live-reordering .task-grid .live-drag-placeholder {
-    transition:
-        transform 105ms ease-out,
-        background-color 105ms ease-out,
-        border-color 105ms ease-out,
-        box-shadow 105ms ease-out;
-}
