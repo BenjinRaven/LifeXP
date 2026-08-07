@@ -1741,39 +1741,6 @@ function setupManageSwipe(item, taskId, active) {
 
     item.dataset.swipeAction = active ? "available" : "delete";
 
-    const applySwipePosition = (dx) => {
-        latestX = Math.max(0, Math.min(dx, maxDistance));
-        const progress = Math.min(latestX / threshold, 1);
-
-        item.classList.add("swiping-action");
-        item.style.setProperty("--swipe-x", `${latestX}px`);
-        item.style.setProperty("--swipe-progress", String(progress));
-        item.style.setProperty("--swipe-red", String(0.10 + progress * 0.58));
-        item.style.transform = `translateX(${latestX}px)`;
-    };
-
-    const executeSwipeAction = () => {
-        const shouldTrigger = swipeStarted && latestX >= threshold;
-        swipeStarted = false;
-
-        if (!shouldTrigger) {
-            resetManageSwipeVisual(item);
-            return;
-        }
-
-        if (active) {
-            moveTaskToAvailable(taskId);
-            return;
-        }
-
-        const deleted = permanentlyDeleteTask(taskId);
-
-        if (!deleted) {
-            resetManageSwipeVisual(item);
-        }
-    };
-
-    /* ---------------- Touch / iPhone ---------------- */
     item.addEventListener("touchstart", (event) => {
         if (event.touches.length !== 1) return;
         if (event.target.closest(".manage-actions")) return;
@@ -1800,100 +1767,50 @@ function setupManageSwipe(item, taskId, active) {
 
             if (!horizontalIntent) return;
             swipeStarted = true;
+            item.classList.add("swiping-action");
         }
 
         event.preventDefault();
-        applySwipePosition(dx);
+
+        latestX = Math.max(0, Math.min(dx, maxDistance));
+        const progress = Math.min(latestX / threshold, 1);
+
+        item.style.setProperty("--swipe-x", `${latestX}px`);
+        item.style.setProperty("--swipe-progress", String(progress));
+        item.style.setProperty("--swipe-red", String(0.10 + progress * 0.58));
+        item.style.transform = `translateX(${latestX}px)`;
     }, { passive: false });
 
-    item.addEventListener("touchend", executeSwipeAction, { passive: true });
-    item.addEventListener("touchcancel", () => {
-        swipeStarted = false;
-        resetManageSwipeVisual(item);
-    }, { passive: true });
-
-    /* ---------------- Desktop / Maus ----------------
-       Die Karte bleibt weiterhin vertikal drag&drop-sortierbar.
-       Eine klare Bewegung nach rechts wird stattdessen als Swipe behandelt. */
-    let mouseDown = false;
-    let mouseSwipeStarted = false;
-
-    item.addEventListener("mousedown", (event) => {
-        if (event.button !== 0) return;
-        if (event.target.closest(".manage-actions")) return;
-
-        mouseDown = true;
-        mouseSwipeStarted = false;
-        startX = event.clientX;
-        startY = event.clientY;
-        latestX = 0;
-        resetManageSwipeVisual(item);
-    });
-
-    // Capture-Listener läuft vor dem normalen HTML5-dragstart.
-    item.addEventListener("dragstart", (event) => {
-        if (!mouseDown) return;
-
-        const dx = event.clientX - startX;
-        const dy = event.clientY - startY;
-        const horizontalIntent =
-            dx > 7 &&
-            Math.abs(dx) > Math.abs(dy) * 1.15;
-
-        if (horizontalIntent) {
-            event.preventDefault();
-            event.stopImmediatePropagation();
-            mouseSwipeStarted = true;
-            swipeStarted = true;
-            applySwipePosition(dx);
-            return;
-        }
-
-        // Vertikale/sonstige Bewegung bleibt normales Drag & Drop.
-        mouseDown = false;
-        mouseSwipeStarted = false;
-        swipeStarted = false;
-        resetManageSwipeVisual(item);
-    }, true);
-
-    const onMouseMove = (event) => {
-        if (!mouseDown) return;
-
-        const dx = event.clientX - startX;
-        const dy = event.clientY - startY;
-
-        if (!mouseSwipeStarted) {
-            const horizontalIntent =
-                dx > 8 &&
-                Math.abs(dx) > Math.abs(dy) * 1.15;
-
-            if (!horizontalIntent) return;
-
-            mouseSwipeStarted = true;
-            swipeStarted = true;
-        }
-
-        event.preventDefault();
-        applySwipePosition(dx);
-    };
-
-    const onMouseUp = () => {
-        if (!mouseDown) return;
-
-        mouseDown = false;
-
-        if (!mouseSwipeStarted) {
+    const finishSwipe = () => {
+        if (!swipeStarted) {
             resetManageSwipeVisual(item);
             return;
         }
 
-        mouseSwipeStarted = false;
-        executeSwipeAction();
+        const shouldTrigger = latestX >= threshold;
+        swipeStarted = false;
+
+        if (!shouldTrigger) {
+            resetManageSwipeVisual(item);
+            return;
+        }
+
+        if (active) {
+            moveTaskToAvailable(taskId);
+            return;
+        }
+
+        const deleted = permanentlyDeleteTask(taskId);
+
+        if (!deleted) {
+            resetManageSwipeVisual(item);
+        }
     };
 
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onMouseUp);
+    item.addEventListener("touchend", finishSwipe, { passive: true });
+    item.addEventListener("touchcancel", () => resetManageSwipeVisual(item), { passive: true });
 }
+
 function createManageAddItem() {
     const button = document.createElement("button");
     button.type = "button";
