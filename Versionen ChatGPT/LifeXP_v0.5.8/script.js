@@ -157,17 +157,9 @@ const defaultState = {
 
 let state = loadState();
 let currentView = "today";
-let selectedEntryDayKey = null;
-let retroEntryExpiresAt = 0;
-let retroEntryTimer = null;
 
 const elements = {
     currentDate: document.getElementById("currentDate"),
-    todayTitle: document.getElementById("todayTitle"),
-    retroDayBanner: document.getElementById("retroDayBanner"),
-    retroDayBannerTitle: document.getElementById("retroDayBannerTitle"),
-    retroDayBannerText: document.getElementById("retroDayBannerText"),
-    returnToTodayButton: document.getElementById("returnToTodayButton"),
     todayXp: document.getElementById("todayXp"),
     totalXp: document.getElementById("totalXp"),
     dailyGoal: document.getElementById("dailyGoal"),
@@ -427,12 +419,6 @@ function compareDateKeys(a, b) {
 }
 
 function getEntryDayKey(entry) {
-    const explicitDate = String(entry?.date || "");
-
-    if (/^\d{4}-\d{2}-\d{2}$/.test(explicitDate)) {
-        return explicitDate;
-    }
-
     if (entry?.createdAt) {
         const createdAt = new Date(entry.createdAt);
         if (!Number.isNaN(createdAt.getTime())) {
@@ -440,27 +426,15 @@ function getEntryDayKey(entry) {
         }
     }
 
-    return "";
+    return String(entry?.date || "");
 }
 
-function formatDisplayDate(date) {
+function formatCurrentDate() {
     return new Intl.DateTimeFormat("de-DE", {
         weekday: "long",
         day: "2-digit",
         month: "long"
-    }).format(date);
-}
-
-function formatCurrentDate() {
-    return formatDisplayDate(getLogicalDate());
-}
-
-function formatRetroTitle(dayKey) {
-    return new Intl.DateTimeFormat("de-DE", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric"
-    }).format(parseDateKey(dayKey));
+    }).format(getLogicalDate());
 }
 
 function formatTime(dateString) {
@@ -872,106 +846,6 @@ function applyPaletteVariables(palette) {
     document.body.style.colorScheme = darkSurface ? "dark" : "light";
 }
 
-
-function isRetroEntryMode() {
-    return Boolean(
-        selectedEntryDayKey &&
-        compareDateKeys(selectedEntryDayKey, getTodayKey()) < 0 &&
-        Date.now() < retroEntryExpiresAt
-    );
-}
-
-function getEntryTargetDayKey() {
-    if (!isRetroEntryMode()) {
-        if (selectedEntryDayKey) {
-            selectedEntryDayKey = null;
-            retroEntryExpiresAt = 0;
-        }
-        return getTodayKey();
-    }
-
-    return selectedEntryDayKey;
-}
-
-function getEntryTargetDate() {
-    return parseDateKey(getEntryTargetDayKey());
-}
-
-function getEntryTargetHistory() {
-    return getHistoryForDayKey(getEntryTargetDayKey());
-}
-
-function getEntryTargetXp() {
-    return getDayXp(getEntryTargetDayKey());
-}
-
-function hasTaskBeenCompletedOnEntryDay(taskId) {
-    return getEntryTargetHistory().some((entry) => entry.taskId === taskId);
-}
-
-function stopRetroEntryMode({ renderAfter = true } = {}) {
-    selectedEntryDayKey = null;
-    retroEntryExpiresAt = 0;
-
-    if (retroEntryTimer) {
-        clearInterval(retroEntryTimer);
-        retroEntryTimer = null;
-    }
-
-    if (renderAfter) render();
-}
-
-function updateRetroEntryBanner() {
-    if (!elements.retroDayBanner) return;
-
-    if (!isRetroEntryMode()) {
-        elements.retroDayBanner.hidden = true;
-        return;
-    }
-
-    const remainingMs = Math.max(0, retroEntryExpiresAt - Date.now());
-    const remainingSeconds = Math.ceil(remainingMs / 1000);
-    const minutes = Math.floor(remainingSeconds / 60);
-    const seconds = remainingSeconds % 60;
-
-    elements.retroDayBanner.hidden = false;
-    elements.retroDayBannerTitle.textContent =
-        `Nachtragen für ${formatRetroTitle(selectedEntryDayKey)}`;
-    elements.retroDayBannerText.textContent =
-        `Noch ${minutes}:${String(seconds).padStart(2, "0")} aktiv`;
-}
-
-function startRetroEntryMode(dayKey) {
-    const todayKey = getTodayKey();
-
-    if (compareDateKeys(dayKey, todayKey) >= 0) return;
-
-    const confirmed = window.confirm(
-        `Bist du dir sicher, dass du zum ${formatRetroTitle(dayKey)} springen willst?\n\n` +
-        "Sei ehrlich: Trage nur Aktivitäten ein, die du an diesem Tag wirklich gemacht hast."
-    );
-
-    if (!confirmed) return;
-
-    selectedEntryDayKey = dayKey;
-    retroEntryExpiresAt = Date.now() + 60 * 1000;
-    currentView = "today";
-
-    if (retroEntryTimer) clearInterval(retroEntryTimer);
-
-    retroEntryTimer = setInterval(() => {
-        if (!isRetroEntryMode()) {
-            stopRetroEntryMode();
-            return;
-        }
-
-        updateRetroEntryBanner();
-    }, 1000);
-
-    render();
-    window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
 function getHistoryForDayKey(dayKey) {
     return state.history.filter((entry) => getEntryDayKey(entry) === dayKey);
 }
@@ -1202,22 +1076,15 @@ function openView(viewName) {
 }
 
 function renderHeaderAndGoal() {
-    const todayXp = getEntryTargetXp();
+    const todayXp = getTodayXp();
     const totalXp = getTotalXp();
     const goal = state.dailyGoal;
-    const retroMode = isRetroEntryMode();
-    const displayDate = retroMode ? getEntryTargetDate() : getLogicalDate();
 
-    document.body.classList.toggle("retro-entry-mode", retroMode);
-    elements.todayTitle.textContent = retroMode
-        ? formatRetroTitle(getEntryTargetDayKey())
-        : "Heute";
-    elements.currentDate.textContent = formatDisplayDate(displayDate);
+    elements.currentDate.textContent = formatCurrentDate();
     elements.todayXp.textContent = todayXp;
     elements.totalXp.textContent = `${totalXp} XP`;
     elements.dailyGoal.textContent = goal;
     elements.dailyGoalInput.value = goal;
-    updateRetroEntryBanner();
 
     const percentage = Math.max(
         0,
@@ -1233,9 +1100,7 @@ function renderHeaderAndGoal() {
     elements.goalStatus.classList.toggle("reached", reached);
 
     if (reached) {
-        elements.goalStatus.textContent = isRetroEntryMode()
-            ? "✓ Tagesziel an diesem Tag geschafft"
-            : "✓ Tagesziel geschafft";
+        elements.goalStatus.textContent = "✓ Tagesziel geschafft";
     } else {
         elements.goalStatus.textContent = `Noch ${goal - todayXp} XP`;
     }
@@ -1243,8 +1108,7 @@ function renderHeaderAndGoal() {
 
 function makeTodayTaskElement(task) {
     const parts = splitEmojiAndName(task.name, task.emoji);
-    const completionCount = getEntryTargetHistory().filter((entry) => entry.taskId === task.id).length;
-    const completedToday = !task.repeatable && completionCount > 0;
+    const completedToday = !task.repeatable && hasTaskBeenCompletedToday(task.id);
 
     const card = document.createElement("article");
     card.className = "task-tile sortable-tile";
@@ -1255,7 +1119,7 @@ function makeTodayTaskElement(task) {
     card.setAttribute(
         "aria-label",
         completedToday
-            ? `${parts.label}, an diesem Tag bereits erledigt`
+            ? `${parts.label}, heute bereits erledigt`
             : `${parts.label}, ${formatXp(task.xp)}`
     );
 
@@ -1287,24 +1151,16 @@ function makeTodayTaskElement(task) {
 
     const xp = document.createElement("strong");
     xp.className = "task-tile-xp";
-    xp.textContent = completedToday ? (isRetroEntryMode() ? "An diesem Tag erledigt" : "Heute erledigt") : formatXp(task.xp);
+    xp.textContent = completedToday ? "Heute erledigt" : formatXp(task.xp);
 
     card.append(dragHandle, emoji, name, xp);
 
-    if (completionCount > 0) {
-        const checkStack = document.createElement("span");
-        checkStack.className = "task-completed-check-stack";
-        checkStack.setAttribute("aria-hidden", "true");
-
-        const visibleChecks = Math.min(completionCount, 4);
-        for (let index = 0; index < visibleChecks; index += 1) {
-            const check = document.createElement("span");
-            check.className = "task-completed-check";
-            check.textContent = "✓";
-            checkStack.appendChild(check);
-        }
-
-        card.appendChild(checkStack);
+    if (completedToday) {
+        const completedCheck = document.createElement("span");
+        completedCheck.className = "task-completed-check";
+        completedCheck.textContent = "✓";
+        completedCheck.setAttribute("aria-hidden", "true");
+        card.appendChild(completedCheck);
     }
 
     if (task.repeatable) {
@@ -1404,7 +1260,7 @@ function renderHistory() {
 }
 
 function renderActionButtons() {
-    const hasEntries = getEntryTargetHistory().length > 0;
+    const hasEntries = getTodayHistory().length > 0;
     elements.undoButton.disabled = !hasEntries;
     elements.resetTodayButton.disabled = !hasEntries;
 }
@@ -1590,26 +1446,6 @@ function renderMonthCalendar() {
             cell.classList.add("missed");
         }
 
-        const isPast = compareDateKeys(key, todayKey) < 0;
-
-        if (isPast) {
-            cell.classList.add("clickable-past");
-            cell.tabIndex = 0;
-            cell.setAttribute(
-                "aria-label",
-                `${formatRetroTitle(key)} nachträglich bearbeiten`
-            );
-
-            const openPastDay = () => startRetroEntryMode(key);
-            cell.addEventListener("click", openPastDay);
-            cell.addEventListener("keydown", (event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    openPastDay();
-                }
-            });
-        }
-
         elements.monthCalendar.appendChild(cell);
     }
 }
@@ -1618,28 +1454,19 @@ function createManageItem(task, active) {
     const item = document.createElement("article");
     item.className = "manage-item";
     item.dataset.taskId = task.id;
-    item.dataset.active = active ? "true" : "false";
-    item.draggable = window.matchMedia("(pointer: fine)").matches;
-    item.classList.add("sortable-item");
-
-    const dragHandle = document.createElement("button");
-    dragHandle.type = "button";
-    dragHandle.className = "drag-handle";
-    dragHandle.setAttribute(
-        "aria-label",
-        active
-            ? `${task.emoji || ""} ${task.name} verschieben`
-            : `${task.emoji || ""} ${task.name} in Aktiv verschieben`
-    );
-    dragHandle.textContent = "≡";
 
     if (active) {
-        setupManageDragHandle(dragHandle, item, task.id);
-    } else {
-        setupCatalogDragHandle(dragHandle, item, task.id);
-    }
+        item.draggable = window.matchMedia("(pointer: fine)").matches;
+        item.classList.add("sortable-item");
 
-    item.appendChild(dragHandle);
+        const dragHandle = document.createElement("button");
+        dragHandle.type = "button";
+        dragHandle.className = "drag-handle";
+        dragHandle.setAttribute("aria-label", `${task.emoji || ""} ${task.name} verschieben`);
+        dragHandle.textContent = "≡";
+        setupManageDragHandle(dragHandle, item, task.id);
+        item.appendChild(dragHandle);
+    }
 
     const text = document.createElement("div");
     text.className = "manage-item-text";
@@ -1726,10 +1553,6 @@ let draggedManageTaskId = null;
 let touchDraggedManageItem = null;
 let draggedTodayTaskId = null;
 let touchDraggedTodayItem = null;
-let draggedCatalogTaskId = null;
-let catalogDropTargetId = null;
-let catalogDropAfter = true;
-let manageDeactivateDropActive = false;
 
 function applyActiveOrder(activeIds) {
     if (!activeIds.length) return;
@@ -1809,348 +1632,6 @@ function removeTouchDragGhost() {
     touchDragGhost = null;
 }
 
-
-
-function clearDeactivateDropIndicator() {
-    manageDeactivateDropActive = false;
-    elements.inactiveTaskList?.classList.remove("deactivate-drop-zone");
-}
-
-function updateDeactivateDropIndicator(clientX, clientY) {
-    clearDeactivateDropIndicator();
-
-    const rect = elements.inactiveTaskList?.getBoundingClientRect();
-
-    if (!rect) return false;
-
-    const inside =
-        clientX >= rect.left &&
-        clientX <= rect.right &&
-        clientY >= rect.top - 44 &&
-        clientY <= rect.bottom + 44;
-
-    if (inside) {
-        manageDeactivateDropActive = true;
-        elements.inactiveTaskList.classList.add("deactivate-drop-zone");
-    }
-
-    return inside;
-}
-
-function deactivateTaskToCatalog(taskId) {
-    const task = state.tasks.find((item) => item.id === taskId);
-    if (!task || !task.active) return false;
-
-    const activeTasks = state.tasks.filter(
-        (item) => item.active && item.id !== taskId
-    );
-    const inactiveTasks = state.tasks.filter(
-        (item) => !item.active && item.id !== taskId
-    );
-
-    task.active = false;
-
-    // Neu ausgeblendete Aktivität steht im Katalog zunächst ganz oben.
-    state.tasks = [
-        ...activeTasks,
-        task,
-        ...inactiveTasks
-    ];
-
-    saveState();
-    render();
-    return true;
-}
-
-function finishDeactivateDrop(taskId) {
-    const shouldDeactivate =
-        manageDeactivateDropActive ||
-        elements.inactiveTaskList?.classList.contains("deactivate-drop-zone");
-
-    clearDeactivateDropIndicator();
-
-    if (!shouldDeactivate) return false;
-
-    return deactivateTaskToCatalog(taskId);
-}
-
-function clearCatalogDropIndicators() {
-    document.querySelectorAll(".catalog-drop-before, .catalog-drop-after").forEach((item) => {
-        item.classList.remove("catalog-drop-before", "catalog-drop-after");
-    });
-
-    elements.activeTaskList?.classList.remove("catalog-drop-zone");
-    catalogDropTargetId = null;
-    catalogDropAfter = true;
-}
-
-function updateCatalogDropIndicator(clientX, clientY) {
-    clearCatalogDropIndicators();
-
-    const target = document
-        .elementFromPoint(clientX, clientY)
-        ?.closest("#activeTaskList .manage-item[data-task-id]");
-
-    const activeListRect = elements.activeTaskList?.getBoundingClientRect();
-    const insideActiveList =
-        activeListRect &&
-        clientX >= activeListRect.left &&
-        clientX <= activeListRect.right &&
-        clientY >= activeListRect.top - 36 &&
-        clientY <= activeListRect.bottom + 36;
-
-    if (!target) {
-        if (insideActiveList) {
-            elements.activeTaskList.classList.add("catalog-drop-zone");
-        }
-        return insideActiveList;
-    }
-
-    const rect = target.getBoundingClientRect();
-    catalogDropTargetId = target.dataset.taskId;
-    catalogDropAfter = clientY > rect.top + rect.height / 2;
-
-    target.classList.add(
-        catalogDropAfter ? "catalog-drop-after" : "catalog-drop-before"
-    );
-
-    elements.activeTaskList.classList.add("catalog-drop-zone");
-    return true;
-}
-
-function activateCatalogTaskAtPosition(taskId, targetId = null, insertAfter = true) {
-    const task = state.tasks.find((item) => item.id === taskId);
-    if (!task) return;
-
-    task.active = true;
-
-    const activeIds = state.tasks
-        .filter((item) => item.active && item.id !== taskId)
-        .map((item) => item.id);
-
-    if (targetId && activeIds.includes(targetId)) {
-        const targetIndex = activeIds.indexOf(targetId);
-        activeIds.splice(targetIndex + (insertAfter ? 1 : 0), 0, taskId);
-    } else {
-        activeIds.push(taskId);
-    }
-
-    applyActiveOrder(activeIds);
-    render();
-}
-
-function finishCatalogDrop(taskId) {
-    const activeList = elements.activeTaskList;
-    const hasValidDrop =
-        activeList?.classList.contains("catalog-drop-zone");
-
-    const targetId = catalogDropTargetId;
-    const insertAfter = catalogDropAfter;
-
-    clearCatalogDropIndicators();
-
-    if (!hasValidDrop) return false;
-
-    activateCatalogTaskAtPosition(taskId, targetId, insertAfter);
-    return true;
-}
-
-function setupCatalogDragHandle(handle, item, taskId) {
-    item.addEventListener("dragstart", (event) => {
-        if (event.target.closest(".manage-actions")) {
-            event.preventDefault();
-            return;
-        }
-
-        draggedCatalogTaskId = taskId;
-        item.classList.add("dragging");
-        document.body.classList.add("catalog-dragging");
-
-        if (event.dataTransfer) {
-            event.dataTransfer.effectAllowed = "move";
-            event.dataTransfer.setData("text/plain", taskId);
-            setFullCardDragPreview(event, item);
-        }
-    });
-
-    item.addEventListener("dragend", () => {
-        item.classList.remove("dragging");
-        document.body.classList.remove("catalog-dragging");
-        clearCatalogDropIndicators();
-        draggedCatalogTaskId = null;
-    });
-
-    let holdTimer = null;
-    let startX = 0;
-    let startY = 0;
-    let touchDragStarted = false;
-
-    const cancelHold = () => {
-        if (holdTimer) {
-            clearTimeout(holdTimer);
-            holdTimer = null;
-        }
-    };
-
-    item.addEventListener("touchstart", (event) => {
-        if (event.touches.length !== 1) return;
-        if (event.target.closest(".manage-actions")) return;
-
-        const touch = event.touches[0];
-        startX = touch.clientX;
-        startY = touch.clientY;
-        touchDragStarted = false;
-        cancelHold();
-
-        holdTimer = setTimeout(() => {
-            draggedCatalogTaskId = taskId;
-            touchDragStarted = true;
-            item.classList.add("dragging");
-            document.body.classList.add("live-reordering", "catalog-dragging");
-            createTouchDragGhost(item, startX, startY);
-        }, 180);
-    }, { passive: true });
-
-    item.addEventListener("touchmove", (event) => {
-        if (event.touches.length !== 1) return;
-
-        const touch = event.touches[0];
-
-        if (!touchDragStarted) {
-            const moved = Math.hypot(
-                touch.clientX - startX,
-                touch.clientY - startY
-            );
-            if (moved > 8) cancelHold();
-            return;
-        }
-
-        event.preventDefault();
-        moveTouchDragGhost(touch.clientX, touch.clientY);
-        updateCatalogDropIndicator(touch.clientX, touch.clientY);
-
-        const viewportEdge = 72;
-        if (touch.clientY < viewportEdge) {
-            window.scrollBy({ top: -10, behavior: "auto" });
-        } else if (touch.clientY > window.innerHeight - viewportEdge) {
-            window.scrollBy({ top: 10, behavior: "auto" });
-        }
-    }, { passive: false });
-
-    const finishTouchCatalogDrag = () => {
-        cancelHold();
-
-        if (!touchDragStarted || draggedCatalogTaskId !== taskId) {
-            touchDragStarted = false;
-            return;
-        }
-
-        item.classList.remove("dragging");
-        removeTouchDragGhost();
-        document.body.classList.remove("live-reordering", "catalog-dragging");
-
-        const dropped = finishCatalogDrop(taskId);
-
-        draggedCatalogTaskId = null;
-        touchDragStarted = false;
-
-        if (!dropped) {
-            renderManagement();
-        }
-    };
-
-    item.addEventListener("touchend", finishTouchCatalogDrag, { passive: true });
-    item.addEventListener("touchcancel", finishTouchCatalogDrag, { passive: true });
-
-    handle.addEventListener("click", (event) => event.stopPropagation());
-}
-
-function setupCatalogDropZone() {
-    if (!elements.activeTaskList) return;
-
-    elements.activeTaskList.addEventListener("dragover", (event) => {
-        if (!draggedCatalogTaskId) return;
-        event.preventDefault();
-
-        if (event.dataTransfer) {
-            event.dataTransfer.dropEffect = "move";
-        }
-
-        updateCatalogDropIndicator(event.clientX, event.clientY);
-    });
-
-    elements.activeTaskList.addEventListener("drop", (event) => {
-        if (!draggedCatalogTaskId) return;
-        event.preventDefault();
-
-        const taskId = draggedCatalogTaskId;
-        finishCatalogDrop(taskId);
-
-        draggedCatalogTaskId = null;
-        document.body.classList.remove("catalog-dragging");
-    });
-
-    elements.activeTaskList.addEventListener("dragleave", (event) => {
-        if (!draggedCatalogTaskId) return;
-
-        const rect = elements.activeTaskList.getBoundingClientRect();
-        const outside =
-            event.clientX < rect.left ||
-            event.clientX > rect.right ||
-            event.clientY < rect.top ||
-            event.clientY > rect.bottom;
-
-        if (outside) {
-            clearCatalogDropIndicators();
-        }
-    });
-
-    if (elements.inactiveTaskList) {
-        elements.inactiveTaskList.addEventListener("dragover", (event) => {
-            if (!draggedManageTaskId) return;
-
-            event.preventDefault();
-
-            if (event.dataTransfer) {
-                event.dataTransfer.dropEffect = "move";
-            }
-
-            updateDeactivateDropIndicator(event.clientX, event.clientY);
-        });
-
-        elements.inactiveTaskList.addEventListener("drop", (event) => {
-            if (!draggedManageTaskId) return;
-
-            event.preventDefault();
-
-            const taskId = draggedManageTaskId;
-
-            // null signalisiert dem dragend-Handler, dass der Drop bereits
-            // vollständig verarbeitet wurde.
-            if (finishDeactivateDrop(taskId)) {
-                draggedManageTaskId = null;
-            }
-
-            document.body.classList.remove("manage-deactivate-dragging");
-        });
-
-        elements.inactiveTaskList.addEventListener("dragleave", (event) => {
-            if (!draggedManageTaskId) return;
-
-            const rect = elements.inactiveTaskList.getBoundingClientRect();
-            const outside =
-                event.clientX < rect.left ||
-                event.clientX > rect.right ||
-                event.clientY < rect.top ||
-                event.clientY > rect.bottom;
-
-            if (outside) {
-                clearDeactivateDropIndicator();
-            }
-        });
-    }
-}
-
 function setupManageDragHandle(handle, item, taskId) {
     item.addEventListener("dragstart", (event) => {
         // Die Aktionsbuttons sollen auf dem Desktop weiterhin normal klickbar bleiben.
@@ -2160,9 +1641,7 @@ function setupManageDragHandle(handle, item, taskId) {
         }
 
         draggedManageTaskId = taskId;
-        clearDeactivateDropIndicator();
         item.classList.add("dragging");
-        document.body.classList.add("manage-deactivate-dragging");
         event.dataTransfer.effectAllowed = "move";
         event.dataTransfer.setData("text/plain", taskId);
         setFullCardDragPreview(event, item);
@@ -2170,17 +1649,9 @@ function setupManageDragHandle(handle, item, taskId) {
 
     item.addEventListener("dragend", () => {
         item.classList.remove("dragging");
-        document.body.classList.remove("manage-deactivate-dragging");
-
-        // Wenn der Drop bereits in "Verfügbar" verarbeitet wurde, wurde
-        // gerendert und die Reihenfolge ist bereits korrekt gespeichert.
-        if (draggedManageTaskId) {
-            syncActiveOrderFromManageDom();
-            renderTodayTasks();
-        }
-
-        clearDeactivateDropIndicator();
+        syncActiveOrderFromManageDom();
         draggedManageTaskId = null;
+        renderTodayTasks();
     });
 
     item.addEventListener("dragover", (event) => {
@@ -2245,13 +1716,9 @@ function setupManageDragHandle(handle, item, taskId) {
         event.preventDefault();
         moveTouchDragGhost(touch.clientX, touch.clientY);
 
-        if (updateDeactivateDropIndicator(touch.clientX, touch.clientY)) {
-            return;
-        }
-
         const target = document
             .elementFromPoint(touch.clientX, touch.clientY)
-            ?.closest("#activeTaskList .manage-item[data-task-id]");
+            ?.closest(".manage-item[data-task-id]");
 
         if (
             !target ||
@@ -2279,18 +1746,11 @@ function setupManageDragHandle(handle, item, taskId) {
         touchDraggedManageItem.classList.remove("dragging");
         removeTouchDragGhost();
         document.body.classList.remove("live-reordering");
-
-        const taskToFinish = draggedManageTaskId;
-        const deactivated = finishDeactivateDrop(taskToFinish);
-
-        if (!deactivated) {
-            syncActiveOrderFromManageDom();
-            renderTodayTasks();
-        }
-
+        syncActiveOrderFromManageDom();
         touchDraggedManageItem = null;
         draggedManageTaskId = null;
         touchDragStarted = false;
+        renderTodayTasks();
     };
 
     item.addEventListener("touchend", finishTouchDrag, { passive: true });
@@ -2608,9 +2068,7 @@ function deleteSavedTheme(id) {
 }
 
 function addHistoryEntry(task) {
-    const targetDayKey = getEntryTargetDayKey();
-
-    if (!task.repeatable && hasTaskBeenCompletedOnEntryDay(task.id)) {
+    if (!task.repeatable && hasTaskBeenCompletedToday(task.id)) {
         return;
     }
 
@@ -2619,9 +2077,8 @@ function addHistoryEntry(task) {
         taskId: task.id,
         taskName: `${task.emoji || ""} ${task.name}`.trim(),
         xp: Number(task.xp),
-        date: targetDayKey,
-        createdAt: new Date().toISOString(),
-        retroactive: isRetroEntryMode()
+        date: getTodayKey(),
+        createdAt: new Date().toISOString()
     });
 
     saveState();
@@ -2629,11 +2086,11 @@ function addHistoryEntry(task) {
 }
 
 function undoLastTodayEntry() {
-    const targetDayKey = getEntryTargetDayKey();
+    const todayKey = getTodayKey();
 
     const todayIndices = state.history
         .map((entry, index) => ({ entry, index }))
-        .filter(({ entry }) => getEntryDayKey(entry) === targetDayKey)
+        .filter(({ entry }) => getEntryDayKey(entry) === todayKey)
         .sort(
             (a, b) =>
                 new Date(b.entry.createdAt) - new Date(a.entry.createdAt)
@@ -2647,19 +2104,17 @@ function undoLastTodayEntry() {
 }
 
 function resetToday() {
-    if (getEntryTargetHistory().length === 0) return;
+    if (getTodayHistory().length === 0) return;
 
-    const targetDayKey = getEntryTargetDayKey();
     const confirmed = window.confirm(
-        isRetroEntryMode()
-            ? `Wirklich alle Einträge vom ${formatRetroTitle(targetDayKey)} löschen?`
-            : "Wirklich alle heutigen Einträge löschen?"
+        "Wirklich alle heutigen Einträge löschen?"
     );
 
     if (!confirmed) return;
 
+    const todayKey = getTodayKey();
     state.history = state.history.filter(
-        (entry) => getEntryDayKey(entry) !== targetDayKey
+        (entry) => getEntryDayKey(entry) !== todayKey
     );
 
     saveState();
@@ -2870,8 +2325,6 @@ function setTheme(theme) {
     render();
 }
 
-setupCatalogDropZone();
-
 document.querySelectorAll(".nav-button").forEach((button) => {
     button.addEventListener("click", () => openView(button.dataset.view));
 });
@@ -2888,9 +2341,6 @@ elements.deleteCustomTaskButton.addEventListener("click", deleteCustomTask);
 
 elements.undoButton.addEventListener("click", undoLastTodayEntry);
 elements.resetTodayButton.addEventListener("click", resetToday);
-if (elements.returnToTodayButton) {
-    elements.returnToTodayButton.addEventListener("click", () => stopRetroEntryMode());
-}
 elements.saveGoalButton.addEventListener("click", saveDailyGoal);
 elements.saveDayResetButton.addEventListener("click", saveDayReset);
 

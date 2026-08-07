@@ -1697,27 +1697,20 @@ body[data-theme="custom"] .progress-track {
     position: relative;
 }
 
-.task-completed-check-stack {
+.task-completed-check {
     position: absolute;
     top: 8px;
     left: 8px;
     z-index: 3;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    pointer-events: none;
-}
-
-.task-completed-check {
     display: grid;
     place-items: center;
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     border-radius: 999px;
     background: var(--positive);
     color: #ffffff;
-    box-shadow: 0 3px 10px color-mix(in srgb, var(--positive) 28%, transparent);
-    font-size: 13px;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--positive) 30%, transparent);
+    font-size: 14px;
     font-weight: 900;
     line-height: 1;
 }
@@ -1964,178 +1957,4 @@ body.catalog-dragging #activeTaskList.catalog-drop-zone {
         justify-self: end;
         margin-left: auto;
     }
-}
-
-
-/* ===== LifeXP v0.6.0 – Vergangene Tage nachtragen ===== */
-
-.month-day.clickable-past {
-    cursor: pointer;
-    transition:
-        transform 120ms ease,
-        box-shadow 120ms ease,
-        border-color 120ms ease;
-}
-
-.month-day.clickable-past:hover,
-.month-day.clickable-past:focus-visible {
-    transform: translateY(-2px);
-    border-color: var(--primary);
-    box-shadow: 0 7px 18px color-mix(in srgb, var(--primary) 15%, transparent);
-    outline: none;
-}
-
-.retro-day-banner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-    margin-bottom: 14px;
-    padding: 13px 14px;
-    border: 1px solid color-mix(in srgb, #ffad42 62%, var(--border));
-    border-radius: 17px;
-    background: color-mix(in srgb, #ffad42 13%, var(--surface));
-    color: var(--text);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-}
-
-.retro-day-banner[hidden] {
-    display: none;
-}
-
-.retro-day-banner > div {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-}
-
-.retro-day-banner strong {
-    font-size: 13px;
-}
-
-.retro-day-banner span {
-    color: var(--muted);
-    font-size: 11px;
-}
-
-.retro-day-banner button {
-    flex: 0 0 auto;
-    min-height: 38px;
-    padding: 7px 10px;
-    border: 1px solid color-mix(in srgb, #ffad42 60%, var(--border));
-    border-radius: 11px;
-    background: color-mix(in srgb, #ffad42 19%, var(--surface));
-    color: var(--text);
-    cursor: pointer;
-    font-weight: 750;
-}
-
-body.retro-entry-mode #todayView {
-    --retro-accent: #ffad42;
-}
-
-body.retro-entry-mode #todayView .topbar,
-body.retro-entry-mode #todayView .goal-card,
-body.retro-entry-mode #todayView .task-tile,
-body.retro-entry-mode #todayView .history-item {
-    border-color: color-mix(in srgb, var(--retro-accent) 34%, var(--border));
-}
-
-body.retro-entry-mode #todayView .goal-card {
-    box-shadow:
-        0 0 0 1px color-mix(in srgb, var(--retro-accent) 14%, transparent),
-        0 10px 28px rgba(0, 0, 0, 0.08);
-}
-
-body.retro-entry-mode #todayView .progress-bar:not(.reached) {
-    background: var(--retro-accent);
-}
-
-body.retro-entry-mode #todayView #todayTitle,
-body.retro-entry-mode #todayView .section-label {
-    color: color-mix(in srgb, var(--retro-accent) 76%, var(--text));
-}
-
-body.retro-entry-mode #todayView::before {
-    position: fixed;
-    z-index: -1;
-    inset: 0;
-    background:
-        linear-gradient(
-            color-mix(in srgb, #ffad42 5%, transparent),
-            color-mix(in srgb, #ffad42 2%, transparent)
-        );
-    content: "";
-    pointer-events: none;
-}
-
-@media (max-width: 430px) {
-    .retro-day-banner {
-        align-items: stretch;
-        flex-direction: column;
-    }
-
-    .retro-day-banner button {
-        width: 100%;
-    }
-}
-
-
-/* ===== LifeXP v0.6.1 – Aktiv per Drag & Drop ausblenden ===== */
-
-#inactiveTaskList {
-    position: relative;
-    transition:
-        background-color 120ms ease,
-        outline-color 120ms ease,
-        box-shadow 120ms ease;
-}
-
-body.manage-deactivate-dragging #inactiveTaskList,
-#inactiveTaskList.deactivate-drop-zone {
-    border-radius: 16px;
-}
-
-#inactiveTaskList.deactivate-drop-zone {
-    background: color-mix(in srgb, var(--muted) 9%, transparent);
-    outline: 2px dashed color-mix(in srgb, var(--primary) 70%, var(--border));
-    outline-offset: 6px;
-    box-shadow:
-        0 0 0 1px color-mix(in srgb, var(--primary) 10%, transparent),
-        0 10px 28px rgba(0, 0, 0, 0.08);
-}
-
-#inactiveTaskList.deactivate-drop-zone::before {
-    position: absolute;
-    z-index: 20;
-    right: 12px;
-    top: -34px;
-    padding: 5px 9px;
-    border: 1px solid color-mix(in srgb, var(--primary) 55%, var(--border));
-    border-radius: 999px;
-    background: var(--surface);
-    color: var(--text);
-    content: "Hier ablegen → Verfügbar";
-    font-size: 10px;
-    font-weight: 800;
-    pointer-events: none;
-    box-shadow: 0 5px 16px rgba(0, 0, 0, 0.12);
-}
-
-body.live-reordering #inactiveTaskList.deactivate-drop-zone {
-    background: color-mix(in srgb, var(--primary) 8%, var(--surface));
-}
-
-
-/* ===== LifeXP v0.6.2 – Klickfeedback für wiederholbare Aktivitäten ===== */
-.grid-three .task-completed-check-stack {
-    top: 6px;
-    left: 6px;
-    gap: 2px;
-}
-
-.grid-three .task-completed-check {
-    width: 18px;
-    height: 18px;
-    font-size: 11px;
 }

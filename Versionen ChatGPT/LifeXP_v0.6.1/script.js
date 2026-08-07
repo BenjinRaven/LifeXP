@@ -947,7 +947,7 @@ function startRetroEntryMode(dayKey) {
     if (compareDateKeys(dayKey, todayKey) >= 0) return;
 
     const confirmed = window.confirm(
-        `Bist du dir sicher, dass du zum ${formatRetroTitle(dayKey)} springen willst?\n\n` +
+        `Bist du dir sicher, dass du zum ${formatRetroTitle(dayKey)} springen willst?\\n\\n` +
         "Sei ehrlich: Trage nur Aktivitäten ein, die du an diesem Tag wirklich gemacht hast."
     );
 
@@ -1243,8 +1243,7 @@ function renderHeaderAndGoal() {
 
 function makeTodayTaskElement(task) {
     const parts = splitEmojiAndName(task.name, task.emoji);
-    const completionCount = getEntryTargetHistory().filter((entry) => entry.taskId === task.id).length;
-    const completedToday = !task.repeatable && completionCount > 0;
+    const completedToday = !task.repeatable && hasTaskBeenCompletedOnEntryDay(task.id);
 
     const card = document.createElement("article");
     card.className = "task-tile sortable-tile";
@@ -1291,20 +1290,12 @@ function makeTodayTaskElement(task) {
 
     card.append(dragHandle, emoji, name, xp);
 
-    if (completionCount > 0) {
-        const checkStack = document.createElement("span");
-        checkStack.className = "task-completed-check-stack";
-        checkStack.setAttribute("aria-hidden", "true");
-
-        const visibleChecks = Math.min(completionCount, 4);
-        for (let index = 0; index < visibleChecks; index += 1) {
-            const check = document.createElement("span");
-            check.className = "task-completed-check";
-            check.textContent = "✓";
-            checkStack.appendChild(check);
-        }
-
-        card.appendChild(checkStack);
+    if (completedToday) {
+        const completedCheck = document.createElement("span");
+        completedCheck.className = "task-completed-check";
+        completedCheck.textContent = "✓";
+        completedCheck.setAttribute("aria-hidden", "true");
+        card.appendChild(completedCheck);
     }
 
     if (task.repeatable) {
