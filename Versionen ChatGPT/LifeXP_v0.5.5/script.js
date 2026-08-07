@@ -1,13 +1,11 @@
 const STORAGE_KEY = "lifexp-state-v1";
-const SCHEMA_VERSION = 8;
+const SCHEMA_VERSION = 6;
 const DEFAULT_DAY_RESET_MINUTES = 4 * 60;
-let emojiMemoryCache = {};
 
 const defaultCatalog = [
     {
         id: "task-joggen",
-        name: "Joggen",
-        emoji: "🏃",
+        name: "🏃 Joggen",
         xp: 15,
         active: true,
         custom: false,
@@ -15,8 +13,7 @@ const defaultCatalog = [
     },
     {
         id: "task-ruecken",
-        name: "Rückengymnastik",
-        emoji: "🧘",
+        name: "🧘 Rückengymnastik",
         xp: 20,
         active: true,
         custom: false,
@@ -24,8 +21,7 @@ const defaultCatalog = [
     },
     {
         id: "task-suessigkeiten",
-        name: "Süßigkeiten gegessen",
-        emoji: "🍫",
+        name: "🍫 Süßigkeiten gegessen",
         xp: -10,
         active: true,
         custom: false,
@@ -33,8 +29,7 @@ const defaultCatalog = [
     },
     {
         id: "task-spazieren",
-        name: "Spazieren",
-        emoji: "🚶",
+        name: "🚶 Spazieren",
         xp: 10,
         active: true,
         custom: false,
@@ -42,8 +37,7 @@ const defaultCatalog = [
     },
     {
         id: "task-sport",
-        name: "Sport",
-        emoji: "🏋️",
+        name: "🏋️ Sport",
         xp: 15,
         active: true,
         custom: false,
@@ -51,8 +45,7 @@ const defaultCatalog = [
     },
     {
         id: "task-todo-oeffnen",
-        name: "To-do-Liste öffnen",
-        emoji: "📋",
+        name: "📋 To-do-Liste öffnen",
         xp: 5,
         active: true,
         custom: false,
@@ -60,8 +53,7 @@ const defaultCatalog = [
     },
     {
         id: "task-todo-bearbeiten",
-        name: "Etwas von der To-do-Liste abhaken",
-        emoji: "✅",
+        name: "✅ Etwas von der To-do-Liste abhaken",
         xp: 10,
         active: true,
         custom: false,
@@ -69,8 +61,7 @@ const defaultCatalog = [
     },
     {
         id: "task-aufraeumen",
-        name: "Aufräumen",
-        emoji: "🧹",
+        name: "🧹 Aufräumen",
         xp: 10,
         active: false,
         custom: false,
@@ -78,8 +69,7 @@ const defaultCatalog = [
     },
     {
         id: "task-salat",
-        name: "Salat essen",
-        emoji: "🥗",
+        name: "🥗 Salat essen",
         xp: 10,
         active: false,
         custom: false,
@@ -87,8 +77,7 @@ const defaultCatalog = [
     },
     {
         id: "task-lesen",
-        name: "30 min Lesen",
-        emoji: "📖",
+        name: "📖 30 min Lesen",
         xp: 10,
         active: false,
         custom: false,
@@ -96,8 +85,7 @@ const defaultCatalog = [
     },
     {
         id: "task-zaehne",
-        name: "Zähne putzen",
-        emoji: "🪥",
+        name: "🪥 Zähne putzen",
         xp: 5,
         active: false,
         custom: false,
@@ -105,8 +93,7 @@ const defaultCatalog = [
     },
     {
         id: "task-vitamin-c",
-        name: "Vitamin C nehmen",
-        emoji: "💊",
+        name: "💊 Vitamin C nehmen",
         xp: 5,
         active: false,
         custom: false,
@@ -114,8 +101,7 @@ const defaultCatalog = [
     },
     {
         id: "task-kreatin",
-        name: "Kreatin nehmen",
-        emoji: "🥄",
+        name: "🥄 Kreatin nehmen",
         xp: 5,
         active: false,
         custom: false,
@@ -123,8 +109,7 @@ const defaultCatalog = [
     },
     {
         id: "task-muell",
-        name: "Müll rausbringen",
-        emoji: "🗑️",
+        name: "🗑️ Müll rausbringen",
         xp: 5,
         active: false,
         custom: false,
@@ -132,8 +117,7 @@ const defaultCatalog = [
     },
     {
         id: "task-10000-schritte",
-        name: "10.000 Schritte erreichen",
-        emoji: "👣",
+        name: "👣 10.000 Schritte erreichen",
         xp: 10,
         active: false,
         custom: false,
@@ -146,12 +130,10 @@ const defaultState = {
     dailyGoal: 50,
     dayResetMinutes: DEFAULT_DAY_RESET_MINUTES,
     gridSize: 2,
-    theme: "dark",
-    customTheme: { background: "#11151d", surface: "#1c2330", accent: "#7b8cff" },
+    theme: "classic",
     tasks: defaultCatalog,
     history: [],
-    deletedTaskIds: [],
-    emojiMemory: {}
+    deletedTaskIds: []
 };
 
 let state = loadState();
@@ -207,15 +189,6 @@ const elements = {
     themeForest: document.getElementById("themeForest"),
     themeDark: document.getElementById("themeDark"),
     themeWarm: document.getElementById("themeWarm"),
-    themeCyber: document.getElementById("themeCyber"),
-    themeViolet: document.getElementById("themeViolet"),
-    themeCyan: document.getElementById("themeCyan"),
-    themeEmber: document.getElementById("themeEmber"),
-    themeCustom: document.getElementById("themeCustom"),
-    customBackgroundInput: document.getElementById("customBackgroundInput"),
-    customSurfaceInput: document.getElementById("customSurfaceInput"),
-    customAccentInput: document.getElementById("customAccentInput"),
-    applyCustomThemeButton: document.getElementById("applyCustomThemeButton"),
 
     dayResetInput: document.getElementById("dayResetInput"),
     saveDayResetButton: document.getElementById("saveDayResetButton"),
@@ -226,8 +199,6 @@ const elements = {
     taskDialogTitle: document.getElementById("taskDialogTitle"),
     editingTaskId: document.getElementById("editingTaskId"),
     taskNameInput: document.getElementById("taskNameInput"),
-    taskEmojiInput: document.getElementById("taskEmojiInput"),
-    suggestEmojiButton: document.getElementById("suggestEmojiButton"),
     taskXpInput: document.getElementById("taskXpInput"),
     taskRepeatableInput: document.getElementById("taskRepeatableInput"),
     closeTaskDialogButton: document.getElementById("closeTaskDialogButton"),
@@ -248,30 +219,22 @@ function loadState() {
 
     try {
         const parsed = JSON.parse(saved);
-        emojiMemoryCache =
-            parsed.emojiMemory && typeof parsed.emojiMemory === "object"
-                ? { ...parsed.emojiMemory }
-                : {};
         const oldTasks = Array.isArray(parsed.tasks) ? parsed.tasks : [];
         const deletedTaskIds = Array.isArray(parsed.deletedTaskIds)
             ? parsed.deletedTaskIds.map(String)
             : [];
 
-        const migratedTasks = oldTasks.map((task) => {
-            const parsedTaskName = extractEmojiFromName(String(task.name || "Unbenannte Aktivität"));
-            return {
-                id: task.id || createId("task"),
-                name: parsedTaskName.label,
-                emoji: String(task.emoji || parsedTaskName.emoji || suggestEmoji(parsedTaskName.label)),
-                xp: Number.isFinite(Number(task.xp)) ? Number(task.xp) : 0,
-                active: task.active !== false,
-                custom:
-                    typeof task.custom === "boolean"
-                        ? task.custom
-                        : !defaultCatalog.some((catalogTask) => catalogTask.id === task.id),
-                repeatable: task.repeatable === true
-            };
-        });
+        const migratedTasks = oldTasks.map((task) => ({
+            id: task.id || createId("task"),
+            name: String(task.name || "Unbenannte Aktivität"),
+            xp: Number.isFinite(Number(task.xp)) ? Number(task.xp) : 0,
+            active: task.active !== false,
+            custom:
+                typeof task.custom === "boolean"
+                    ? task.custom
+                    : !defaultCatalog.some((catalogTask) => catalogTask.id === task.id),
+            repeatable: task.repeatable === true
+        }));
 
         defaultCatalog.forEach((catalogTask) => {
             const existingTask = migratedTasks.find((task) => task.id === catalogTask.id);
@@ -285,7 +248,6 @@ function loadState() {
 
             if (!existingTask.custom) {
                 existingTask.name = catalogTask.name;
-                existingTask.emoji = catalogTask.emoji;
                 existingTask.xp = catalogTask.xp;
             }
         });
@@ -334,14 +296,12 @@ function loadState() {
                     ? clamp(Math.round(Number(parsed.dayResetMinutes)), 0, 1439)
                     : DEFAULT_DAY_RESET_MINUTES,
             gridSize: Number(parsed.gridSize) === 3 ? 3 : 2,
-            theme: ["classic", "forest", "dark", "warm", "cyber", "violet", "cyan", "ember", "custom"].includes(parsed.theme)
+            theme: ["classic", "forest", "dark", "warm"].includes(parsed.theme)
                 ? parsed.theme
-                : "dark",
-            customTheme: normalizeCustomTheme(parsed.customTheme),
+                : "classic",
             tasks: migratedTasks,
             history: Array.isArray(parsed.history) ? parsed.history : [],
-            deletedTaskIds,
-            emojiMemory: emojiMemoryCache
+            deletedTaskIds
         };
     } catch (error) {
         console.error("Gespeicherte Daten konnten nicht geladen werden.", error);
@@ -458,317 +418,21 @@ function formatResetTime(minutes) {
     return `${hours}:${mins}`;
 }
 
-function extractEmojiFromName(name) {
-    const text = String(name || "").trim();
-    const match = text.match(/^(\p{Extended_Pictographic}(?:\uFE0F|\u200D|\p{Emoji_Modifier})*)\s*(.*)$/u);
+function splitEmojiAndName(name) {
+    const match = String(name).match(
+        /^(\p{Extended_Pictographic}(?:\uFE0F|\u200D|\p{Emoji_Modifier})*)\s*(.*)$/u
+    );
 
     if (!match) {
-        return { emoji: "", label: text };
+        return { emoji: "✓", label: name };
     }
 
     return {
         emoji: match[1],
-        label: match[2] || text
+        label: match[2] || name
     };
 }
 
-function normalizeEmojiText(value) {
-    return String(value || "")
-        .toLowerCase()
-        .replace(/ß/g, "ss")
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-z0-9äöü\s-]/gi, " ")
-        .replace(/[-_/]+/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-}
-
-function emojiTokens(value) {
-    return normalizeEmojiText(value)
-        .split(" ")
-        .filter((token) => token.length >= 2);
-}
-
-function levenshteinDistance(a, b) {
-    if (a === b) return 0;
-    if (!a.length) return b.length;
-    if (!b.length) return a.length;
-
-    const row = Array.from({ length: b.length + 1 }, (_, i) => i);
-
-    for (let i = 1; i <= a.length; i += 1) {
-        let previous = row[0];
-        row[0] = i;
-
-        for (let j = 1; j <= b.length; j += 1) {
-            const temp = row[j];
-            const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-            row[j] = Math.min(
-                row[j] + 1,
-                row[j - 1] + 1,
-                previous + cost
-            );
-            previous = temp;
-        }
-    }
-
-    return row[b.length];
-}
-
-const EMOJI_CONCEPTS = [
-    { emoji: "⛏️", keywords: ["minecraft", "mine craft", "mining", "erz abbauen", "abbauen", "spitzhacke"] },
-    { emoji: "🎮", keywords: ["gaming", "game", "games", "videospiel", "videospiele", "zocken", "spielen", "playstation", "ps5", "xbox", "steam", "konsole", "pc spiel"] },
-    { emoji: "🛒", keywords: ["einkauf", "einkaufen", "einkaufen gehen", "supermarkt", "lebensmittel kaufen", "shopping lebensmittel", "wocheneinkauf"] },
-    { emoji: "🛍️", keywords: ["shopping", "shoppen", "kleidung kaufen", "sachen kaufen", "laden gehen", "geschenke kaufen"] },
-    { emoji: "🧹", keywords: ["putzen", "sauber machen", "saubermachen", "wohnung putzen", "zimmer putzen", "aufräumen", "aufräumen", "ordnung machen", "kehren", "fegen", "staub wischen", "staubwischen"] },
-    { emoji: "🧽", keywords: ["wischen", "abwischen", "bad putzen", "küche putzen", "oberflächen reinigen", "spülen reinigen", "schrubben"] },
-    { emoji: "🧺", keywords: ["wäsche", "waesche", "waschen", "wäsche waschen", "waschmaschine", "kleidung waschen", "wäsche aufhängen", "waesche aufhaengen"] },
-    { emoji: "🗑️", keywords: ["müll", "muell", "abfall", "müll rausbringen", "müll wegbringen", "mülleimer", "papierkorb leeren", "recycling"] },
-    { emoji: "🪥", keywords: ["zähne putzen", "zaehne putzen", "zahnpflege", "zahnbürste", "zahnbuerste", "zähne", "zaehne"] },
-    { emoji: "🦷", keywords: ["zahnarzt", "zahn", "zahnreinigung", "zahntermin"] },
-    { emoji: "🚿", keywords: ["duschen", "dusche", "baden", "körperpflege", "koerperpflege", "waschen gehen"] },
-    { emoji: "🧴", keywords: ["hautpflege", "creme", "eincremen", "sonnencreme", "pflege"] },
-    { emoji: "🪒", keywords: ["rasieren", "rasur", "bart rasieren"] },
-    { emoji: "💊", keywords: ["medikament", "medikamente", "tablette", "tabletten", "vitamin", "vitamine", "supplement", "nahrungsergänzung", "nahrungsergaenzung", "pille nehmen"] },
-    { emoji: "🥄", keywords: ["kreatin", "creatin", "proteinpulver", "pulver nehmen"] },
-    { emoji: "💧", keywords: ["wasser", "wasser trinken", "trinken", "hydrieren", "flasche wasser"] },
-    { emoji: "☕", keywords: ["kaffee", "coffee", "espresso", "cappuccino"] },
-    { emoji: "🍵", keywords: ["tee", "grüner tee", "gruener tee"] },
-    { emoji: "🥗", keywords: ["salat", "gesund essen", "gesundes essen", "gemüse", "gemuese", "healthy food", "gesund ernähren", "gesund ernaehren"] },
-    { emoji: "🍎", keywords: ["obst", "apfel", "frucht", "früchte", "fruechte"] },
-    { emoji: "🥦", keywords: ["brokkoli", "gemüse essen", "gemuese essen", "greens"] },
-    { emoji: "🍫", keywords: ["süßigkeiten", "suessigkeiten", "süßes", "suesses", "schokolade", "zucker", "snack", "naschen"] },
-    { emoji: "🍔", keywords: ["fast food", "burger", "junkfood", "junk food"] },
-    { emoji: "🍕", keywords: ["pizza"] },
-    { emoji: "🍺", keywords: ["bier", "alkohol trinken", "alkohol"] },
-    { emoji: "🚭", keywords: ["nicht rauchen", "rauchfrei", "zigarette vermeiden", "rauchen vermeiden"] },
-    { emoji: "🏃", keywords: ["joggen", "laufen", "rennen", "run", "running", "dauerlauf", "lauftraining"] },
-    { emoji: "🚶", keywords: ["spazieren", "spaziergang", "gehen", "walk", "walking", "runde gehen", "gassi"] },
-    { emoji: "👣", keywords: ["schritte", "10000 schritte", "10 000 schritte", "zehntausend schritte", "steps"] },
-    { emoji: "🏋️", keywords: ["sport", "training", "gym", "fitness", "krafttraining", "fitnessstudio", "workout", "hantel", "muskeln"] },
-    { emoji: "🤸", keywords: ["gymnastik", "turnen", "mobilität", "mobilitaet", "beweglichkeit"] },
-    { emoji: "🧘", keywords: ["yoga", "dehnen", "stretching", "rückengymnastik", "rueckengymnastik", "rückenübung", "rueckenuebung", "physio", "pilates", "meditation"] },
-    { emoji: "🚴", keywords: ["fahrrad", "radfahren", "bike", "cycling", "rad fahren"] },
-    { emoji: "🏊", keywords: ["schwimmen", "schwimmbad", "swimming"] },
-    { emoji: "⚽", keywords: ["fußball", "fussball", "football", "kicken"] },
-    { emoji: "🏀", keywords: ["basketball"] },
-    { emoji: "🎾", keywords: ["tennis"] },
-    { emoji: "🏓", keywords: ["tischtennis", "ping pong"] },
-    { emoji: "🥊", keywords: ["boxen", "boxing", "kampfsport"] },
-    { emoji: "🥾", keywords: ["wandern", "hiking", "wanderung"] },
-    { emoji: "🛌", keywords: ["ins bett", "bett gehen", "schlafen gehen", "früh schlafen", "frueh schlafen"] },
-    { emoji: "😴", keywords: ["schlaf", "schlafen", "ausschlafen", "schlafroutine", "powernap", "nap"] },
-    { emoji: "⏰", keywords: ["aufstehen", "wecker", "früh aufstehen", "frueh aufstehen", "rechtzeitig aufstehen"] },
-    { emoji: "📋", keywords: ["todo", "to do", "to-do", "liste öffnen", "liste oeffnen", "aufgabenliste", "checkliste", "plan öffnen", "plan oeffnen"] },
-    { emoji: "✅", keywords: ["abhaken", "erledigen", "erledigt", "fertig machen", "aufgabe abschließen", "aufgabe abschliessen", "todo erledigen"] },
-    { emoji: "🗓️", keywords: ["kalender", "termin", "termine", "planung", "woche planen", "tag planen", "schedule"] },
-    { emoji: "⏳", keywords: ["zeitmanagement", "pomodoro", "fokuszeit", "timer"] },
-    { emoji: "🎯", keywords: ["ziel", "ziele", "challenge", "vorhaben", "projektziel"] },
-    { emoji: "📖", keywords: ["lesen", "buch", "bücher", "buecher", "roman", "literatur", "read"] },
-    { emoji: "🎓", keywords: ["lernen", "studieren", "studium", "kurs", "weiterbildung", "prüfung lernen", "pruefung lernen", "schule"] },
-    { emoji: "📝", keywords: ["schreiben", "notizen", "notiz", "tagebuch", "journal", "aufschreiben", "text schreiben"] },
-    { emoji: "🧠", keywords: ["denken", "konzentrieren", "fokus", "mental", "gehirn", "achtsamkeit", "mindfulness"] },
-    { emoji: "🧩", keywords: ["rätsel", "raetsel", "puzzle", "logik"] },
-    { emoji: "💼", keywords: ["arbeit", "job", "arbeiten", "büro", "buero", "office", "beruf"] },
-    { emoji: "💻", keywords: ["computer", "pc", "laptop", "programmieren", "coding", "code", "software", "entwickeln"] },
-    { emoji: "📧", keywords: ["email", "e-mail", "mail", "mails", "postfach", "inbox"] },
-    { emoji: "📞", keywords: ["anrufen", "telefonieren", "telefonat", "call"] },
-    { emoji: "💬", keywords: ["nachricht", "schreiben antworten", "chat", "whatsapp", "antworten"] },
-    { emoji: "📦", keywords: ["paket", "paket abholen", "paket verschicken", "versand", "post"] },
-    { emoji: "📬", keywords: ["briefkasten", "post holen", "post öffnen", "post oeffnen"] },
-    { emoji: "💰", keywords: ["geld", "sparen", "finanzen", "budget", "konto", "vermögen", "vermoegen"] },
-    { emoji: "💳", keywords: ["rechnung bezahlen", "bezahlen", "zahlung", "karte", "kreditkarte"] },
-    { emoji: "🏦", keywords: ["bank", "überweisung", "ueberweisung", "banking"] },
-    { emoji: "📈", keywords: ["aktien", "börse", "boerse", "investment", "investieren", "depot", "rendite"] },
-    { emoji: "🧾", keywords: ["rechnung", "beleg", "quittung", "steuer", "steuererklärung", "steuererklaerung"] },
-    { emoji: "🧑‍🤝‍🧑", keywords: ["freunde", "freund treffen", "freunde treffen", "sozial", "menschen treffen", "social"] },
-    { emoji: "👨‍👩‍👧‍👦", keywords: ["familie", "eltern", "familie besuchen", "familie treffen"] },
-    { emoji: "❤️", keywords: ["partner", "freundin", "freund", "beziehung", "date", "liebe"] },
-    { emoji: "🐕", keywords: ["hund", "gassi gehen", "haustier", "dog"] },
-    { emoji: "🐈", keywords: ["katze", "cat"] },
-    { emoji: "🎸", keywords: ["gitarre", "gitarre spielen", "instrument", "musik machen"] },
-    { emoji: "🎹", keywords: ["klavier", "piano", "keyboard spielen"] },
-    { emoji: "🎵", keywords: ["musik", "musik hören", "musik hoeren", "song", "playlist"] },
-    { emoji: "🎧", keywords: ["podcast", "hörbuch", "hoerbuch", "kopfhörer", "kopfhoerer"] },
-    { emoji: "🎬", keywords: ["film", "kino", "movie", "serie", "netflix", "fernsehen"] },
-    { emoji: "📺", keywords: ["tv", "fernsehen schauen", "youtube"] },
-    { emoji: "📷", keywords: ["foto", "fotografieren", "kamera", "bilder machen"] },
-    { emoji: "🎨", keywords: ["malen", "zeichnen", "kunst", "design", "kreativ"] },
-    { emoji: "✂️", keywords: ["basteln", "schneiden", "handarbeit"] },
-    { emoji: "🌱", keywords: ["pflanzen", "pflanze gießen", "pflanzen giessen", "garten", "gärtnern", "gaertnern"] },
-    { emoji: "🪴", keywords: ["zimmerpflanze", "blumen gießen", "blumen giessen"] },
-    { emoji: "🍳", keywords: ["kochen", "essen kochen", "küche", "kueche", "meal prep"] },
-    { emoji: "🥣", keywords: ["frühstück", "fruehstueck", "müsli", "muesli"] },
-    { emoji: "🍽️", keywords: ["essen", "mittagessen", "abendessen", "mahlzeit"] },
-    { emoji: "🧼", keywords: ["hände waschen", "haende waschen", "seife", "hygiene"] },
-    { emoji: "🛏️", keywords: ["bett machen", "bett beziehen", "bettwäsche", "bettwaesche"] },
-    { emoji: "🚗", keywords: ["auto", "fahren", "autofahrt", "wagen", "car"] },
-    { emoji: "⛽", keywords: ["tanken", "benzin", "tankstelle", "sprit"] },
-    { emoji: "🔧", keywords: ["reparieren", "reparatur", "werkzeug", "handwerken", "fixen"] },
-    { emoji: "🛞", keywords: ["reifen", "räder", "raeder", "reifen wechseln"] },
-    { emoji: "🚌", keywords: ["bus", "öffis", "oeffis", "nahverkehr"] },
-    { emoji: "🚆", keywords: ["zug", "bahn", "deutsche bahn", "train"] },
-    { emoji: "✈️", keywords: ["flug", "fliegen", "reise", "urlaub", "airport", "flughafen"] },
-    { emoji: "🧳", keywords: ["koffer", "packen", "reise packen", "gepäck", "gepaeck"] },
-    { emoji: "🗺️", keywords: ["route planen", "reise planen", "karte", "navigation"] },
-    { emoji: "🏠", keywords: ["wohnung", "haus", "zuhause", "home"] },
-    { emoji: "🔑", keywords: ["schlüssel", "schluessel", "schloss", "wohnungsschlüssel"] },
-    { emoji: "🛠️", keywords: ["heimwerken", "bauen", "montieren", "möbel aufbauen", "moebel aufbauen"] },
-    { emoji: "🛒", keywords: ["drogerie", "aldi", "lidl", "rewe", "edeka", "kaufland"] },
-    { emoji: "💇", keywords: ["friseur", "haare schneiden", "haarschnitt"] },
-    { emoji: "👕", keywords: ["kleidung", "anziehen", "outfit", "klamotten"] },
-    { emoji: "👟", keywords: ["schuhe", "sneaker"] },
-    { emoji: "🩺", keywords: ["arzt", "arzttermin", "untersuchung", "gesundheitscheck", "doktor"] },
-    { emoji: "🏥", keywords: ["krankenhaus", "klinik"] },
-    { emoji: "🩸", keywords: ["blut", "bluttest", "blutabnahme"] },
-    { emoji: "💉", keywords: ["impfung", "impfen", "spritze"] },
-    { emoji: "🌞", keywords: ["sonne", "tageslicht", "rausgehen", "frische luft"] },
-    { emoji: "🌳", keywords: ["natur", "wald", "park", "draußen", "draussen"] },
-    { emoji: "📱", keywords: ["handy", "smartphone", "iphone", "telefon"] },
-    { emoji: "🚫", keywords: ["vermeiden", "nicht machen", "aufhören", "aufhoeren", "verzicht", "kein"] },
-    { emoji: "📵", keywords: ["weniger handy", "kein handy", "handypause", "digital detox", "social media vermeiden"] },
-    { emoji: "⏱️", keywords: ["zeit stoppen", "stoppuhr", "dauer messen"] },
-    { emoji: "🧘‍♂️", keywords: ["entspannen", "relaxen", "ruhe", "pause", "stress reduzieren"] },
-    { emoji: "🙏", keywords: ["dankbarkeit", "dankbar", "beten", "gebet"] },
-    { emoji: "🌬️", keywords: ["atmen", "atemübung", "atemuebung", "breathing"] },
-    { emoji: "🧊", keywords: ["kalt duschen", "eisbad", "kälte", "kaelte"] },
-    { emoji: "🔥", keywords: ["sauna", "wärme", "waerme"] },
-    { emoji: "⭐", keywords: ["wichtig", "priorität", "prioritaet", "extra", "bonus"] }
-];
-
-const GENERIC_EMOJI_FALLBACKS = [
-    { pattern: /\b(essen|mahlzeit|nahrung)\b/, emoji: "🍽️" },
-    { pattern: /\b(trinken|getrank)\b/, emoji: "🥤" },
-    { pattern: /\b(machen|erledigen|abschliessen|abschließen)\b/, emoji: "✅" },
-    { pattern: /\b(lernen|üben|ueben)\b/, emoji: "📚" },
-    { pattern: /\b(spielen|spiel)\b/, emoji: "🎮" },
-    { pattern: /\b(kaufen|einkauf)\b/, emoji: "🛒" },
-    { pattern: /\b(reinigen|putzen|sauber)\b/, emoji: "🧹" },
-    { pattern: /\b(fahren|fahrt)\b/, emoji: "🚗" },
-    { pattern: /\b(termin|treffen)\b/, emoji: "📅" }
-];
-
-function scoreEmojiConcept(text, tokens, concept) {
-    let score = 0;
-
-    for (const rawKeyword of concept.keywords) {
-        const keyword = normalizeEmojiText(rawKeyword);
-        if (!keyword) continue;
-
-        if (text === keyword) {
-            score = Math.max(score, 180 + keyword.length);
-            continue;
-        }
-
-        if (text.includes(keyword)) {
-            score = Math.max(score, 110 + Math.min(keyword.length, 30));
-        }
-
-        const keywordTokens = keyword.split(" ").filter(Boolean);
-        const matchedTokens = keywordTokens.filter((keywordToken) =>
-            tokens.includes(keywordToken)
-        ).length;
-
-        if (keywordTokens.length && matchedTokens === keywordTokens.length) {
-            score = Math.max(score, 75 + matchedTokens * 12);
-        } else if (matchedTokens > 0) {
-            score = Math.max(score, 34 + matchedTokens * 10);
-        }
-
-        if (keywordTokens.length === 1 && keywordTokens[0].length >= 5) {
-            for (const token of tokens) {
-                if (token.length < 5) continue;
-                const distance = levenshteinDistance(token, keywordTokens[0]);
-
-                if (distance === 1) {
-                    score = Math.max(score, 42);
-                } else if (distance === 2 && Math.max(token.length, keywordTokens[0].length) >= 8) {
-                    score = Math.max(score, 25);
-                }
-            }
-        }
-    }
-
-    return score;
-}
-
-function suggestEmoji(name) {
-    const text = normalizeEmojiText(name);
-    if (!text) return "🎯";
-
-    const remembered = emojiMemoryCache[text];
-    if (remembered) return remembered;
-
-    const tokens = emojiTokens(text);
-    let bestEmoji = "";
-    let bestScore = 0;
-
-    for (const concept of EMOJI_CONCEPTS) {
-        const score = scoreEmojiConcept(text, tokens, concept);
-
-        if (score > bestScore) {
-            bestScore = score;
-            bestEmoji = concept.emoji;
-        }
-    }
-
-    if (bestEmoji && bestScore >= 25) {
-        return bestEmoji;
-    }
-
-    for (const fallback of GENERIC_EMOJI_FALLBACKS) {
-        if (fallback.pattern.test(text)) {
-            return fallback.emoji;
-        }
-    }
-
-    return "🎯";
-}
-
-function splitEmojiAndName(name, emoji = "") {
-    const parsed = extractEmojiFromName(name);
-    return {
-        emoji: emoji || parsed.emoji || suggestEmoji(parsed.label),
-        label: parsed.label
-    };
-}
-
-function normalizeCustomTheme(value) {
-    const fallback = { background: "#11151d", surface: "#1c2330", accent: "#7b8cff" };
-    if (!value || typeof value !== "object") return fallback;
-    const valid = (v, f) => /^#[0-9a-f]{6}$/i.test(String(v || "")) ? String(v) : f;
-    return {
-        background: valid(value.background, fallback.background),
-        surface: valid(value.surface, fallback.surface),
-        accent: valid(value.accent, fallback.accent)
-    };
-}
-
-function hexToRgb(hex) {
-    const value = String(hex).replace("#", "");
-    return {
-        r: parseInt(value.slice(0, 2), 16),
-        g: parseInt(value.slice(2, 4), 16),
-        b: parseInt(value.slice(4, 6), 16)
-    };
-}
-
-function relativeLuminance(hex) {
-    const { r, g, b } = hexToRgb(hex);
-    const channels = [r, g, b].map((channel) => {
-        const c = channel / 255;
-        return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-    });
-    return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
-}
-
-function mixHex(hexA, hexB, ratio) {
-    const a = hexToRgb(hexA);
-    const b = hexToRgb(hexB);
-    const mix = (x, y) => Math.round(x + (y - x) * ratio).toString(16).padStart(2, "0");
-    return `#${mix(a.r,b.r)}${mix(a.g,b.g)}${mix(a.b,b.b)}`;
-}
 function getHistoryForDayKey(dayKey) {
     return state.history.filter((entry) => getEntryDayKey(entry) === dayKey);
 }
@@ -948,51 +612,25 @@ function render() {
 }
 
 function applyTheme() {
-    const allowedThemes = ["classic", "forest", "dark", "warm", "cyber", "violet", "cyan", "ember", "custom"];
-    const theme = allowedThemes.includes(state.theme) ? state.theme : "dark";
+    const theme = ["classic", "forest", "dark", "warm"].includes(state.theme)
+        ? state.theme
+        : "classic";
 
     document.body.dataset.theme = theme;
-    document.documentElement.removeAttribute("style");
 
     const themeColors = {
         classic: "#f3f5f8",
         forest: "#edf4ef",
         dark: "#11151d",
-        warm: "#f7f0e7",
-        cyber: "#080d14",
-        violet: "#120d1d",
-        cyan: "#07171a",
-        ember: "#18100e",
-        custom: state.customTheme.background
+        warm: "#f7f0e7"
     };
-
-    if (theme === "custom") {
-        const custom = normalizeCustomTheme(state.customTheme);
-        const darkSurface = relativeLuminance(custom.surface) < 0.34;
-        const text = darkSurface ? "#f4f7fb" : "#172033";
-        const muted = darkSurface ? mixHex(custom.surface, "#ffffff", 0.60) : mixHex(custom.surface, "#000000", 0.55);
-        const border = darkSurface ? mixHex(custom.surface, "#ffffff", 0.16) : mixHex(custom.surface, "#000000", 0.14);
-        const soft = darkSurface ? mixHex(custom.surface, "#ffffff", 0.07) : mixHex(custom.surface, "#000000", 0.04);
-        const primaryDark = mixHex(custom.accent, "#000000", 0.18);
-        const root = document.documentElement.style;
-        root.setProperty("--background", custom.background);
-        root.setProperty("--surface", custom.surface);
-        root.setProperty("--surface-soft", soft);
-        root.setProperty("--text", text);
-        root.setProperty("--muted", muted);
-        root.setProperty("--border", border);
-        root.setProperty("--primary", custom.accent);
-        root.setProperty("--primary-dark", primaryDark);
-        document.body.style.colorScheme = darkSurface ? "dark" : "light";
-    } else {
-        document.body.style.colorScheme = "";
-    }
 
     const themeColorMeta = document.querySelector('meta[name="theme-color"]');
     if (themeColorMeta) {
         themeColorMeta.setAttribute("content", themeColors[theme]);
     }
 }
+
 function renderNavigation() {
     document.querySelectorAll(".view").forEach((view) => {
         view.classList.toggle(
@@ -1046,7 +684,7 @@ function renderHeaderAndGoal() {
 }
 
 function makeTodayTaskElement(task) {
-    const parts = splitEmojiAndName(task.name, task.emoji);
+    const parts = splitEmojiAndName(task.name);
     const completedToday = !task.repeatable && hasTaskBeenCompletedToday(task.id);
 
     const card = document.createElement("article");
@@ -1384,7 +1022,7 @@ function createManageItem(task, active) {
         const dragHandle = document.createElement("button");
         dragHandle.type = "button";
         dragHandle.className = "drag-handle";
-        dragHandle.setAttribute("aria-label", `${task.emoji || ""} ${task.name} verschieben`);
+        dragHandle.setAttribute("aria-label", `${task.name} verschieben`);
         dragHandle.textContent = "≡";
         setupManageDragHandle(dragHandle, item, task.id);
         item.appendChild(dragHandle);
@@ -1394,7 +1032,7 @@ function createManageItem(task, active) {
     text.className = "manage-item-text";
 
     const name = document.createElement("strong");
-    name.textContent = `${task.emoji || suggestEmoji(task.name)} ${task.name}`;
+    name.textContent = task.name;
 
     const meta = document.createElement("span");
     meta.className = task.xp < 0 ? "negative-text" : "positive-text";
@@ -1861,15 +1499,6 @@ function renderSettings() {
     if (elements.themeForest) elements.themeForest.checked = state.theme === "forest";
     if (elements.themeDark) elements.themeDark.checked = state.theme === "dark";
     if (elements.themeWarm) elements.themeWarm.checked = state.theme === "warm";
-    if (elements.themeCyber) elements.themeCyber.checked = state.theme === "cyber";
-    if (elements.themeViolet) elements.themeViolet.checked = state.theme === "violet";
-    if (elements.themeCyan) elements.themeCyan.checked = state.theme === "cyan";
-    if (elements.themeEmber) elements.themeEmber.checked = state.theme === "ember";
-    if (elements.themeCustom) elements.themeCustom.checked = state.theme === "custom";
-    const custom = normalizeCustomTheme(state.customTheme);
-    if (elements.customBackgroundInput) elements.customBackgroundInput.value = custom.background;
-    if (elements.customSurfaceInput) elements.customSurfaceInput.value = custom.surface;
-    if (elements.customAccentInput) elements.customAccentInput.value = custom.accent;
 
     elements.dayResetInput.value = formatResetTime(state.dayResetMinutes);
 
@@ -1888,7 +1517,7 @@ function addHistoryEntry(task) {
     state.history.push({
         id: createId("history"),
         taskId: task.id,
-        taskName: `${task.emoji || ""} ${task.name}`.trim(),
+        taskName: task.name,
         xp: Number(task.xp),
         date: getTodayKey(),
         createdAt: new Date().toISOString()
@@ -1976,16 +1605,12 @@ function openTaskDialog(taskId = "") {
 
         elements.taskDialogTitle.textContent = "Aktivität bearbeiten";
         elements.taskNameInput.value = task.name;
-        elements.taskEmojiInput.value = task.emoji || suggestEmoji(task.name);
-        elements.taskEmojiInput.dataset.manual = "true";
         elements.taskXpInput.value = task.xp;
         elements.taskRepeatableInput.checked = task.repeatable === true;
         elements.deleteCustomTaskButton.hidden = !task.custom;
     } else {
         elements.taskDialogTitle.textContent = "Neue Aktivität";
         elements.taskNameInput.value = "";
-        elements.taskEmojiInput.value = "🎯";
-        elements.taskEmojiInput.dataset.manual = "false";
         elements.taskXpInput.value = 10;
         elements.taskRepeatableInput.checked = false;
         elements.deleteCustomTaskButton.hidden = true;
@@ -2002,14 +1627,12 @@ function closeTaskDialog() {
     elements.taskDialog.close();
     elements.taskForm.reset();
     elements.editingTaskId.value = "";
-    if (elements.taskEmojiInput) elements.taskEmojiInput.dataset.manual = "false";
 }
 
 function saveTask(event) {
     event.preventDefault();
 
-    const name = extractEmojiFromName(elements.taskNameInput.value.trim()).label;
-    const emoji = (elements.taskEmojiInput.value.trim() || suggestEmoji(name)).slice(0, 16);
+    const name = elements.taskNameInput.value.trim();
     const xp = Number(elements.taskXpInput.value);
     const repeatable = elements.taskRepeatableInput.checked;
     const editingId = elements.editingTaskId.value;
@@ -2024,29 +1647,18 @@ function saveTask(event) {
         return;
     }
 
-    state.emojiMemory = state.emojiMemory && typeof state.emojiMemory === "object"
-        ? state.emojiMemory
-        : {};
-    const memoryKey = normalizeEmojiText(name);
-    if (memoryKey && emoji) {
-        state.emojiMemory[memoryKey] = emoji;
-        emojiMemoryCache[memoryKey] = emoji;
-    }
-
     if (editingId) {
         const task = state.tasks.find((item) => item.id === editingId);
 
         if (!task) return;
 
         task.name = name;
-        task.emoji = emoji;
         task.xp = xp;
         task.repeatable = repeatable;
     } else {
         state.tasks.push({
             id: createId("task"),
             name,
-            emoji,
             xp,
             active: true,
             custom: true,
@@ -2128,7 +1740,7 @@ function setGridSize(size) {
 }
 
 function setTheme(theme) {
-    if (!["classic", "forest", "dark", "warm", "cyber", "violet", "cyan", "ember", "custom"].includes(theme)) return;
+    if (!["classic", "forest", "dark", "warm"].includes(theme)) return;
     state.theme = theme;
     saveState();
     render();
@@ -2168,47 +1780,6 @@ if (elements.themeClassic) elements.themeClassic.addEventListener("change", () =
 if (elements.themeForest) elements.themeForest.addEventListener("change", () => setTheme("forest"));
 if (elements.themeDark) elements.themeDark.addEventListener("change", () => setTheme("dark"));
 if (elements.themeWarm) elements.themeWarm.addEventListener("change", () => setTheme("warm"));
-if (elements.themeCyber) elements.themeCyber.addEventListener("change", () => setTheme("cyber"));
-if (elements.themeViolet) elements.themeViolet.addEventListener("change", () => setTheme("violet"));
-if (elements.themeCyan) elements.themeCyan.addEventListener("change", () => setTheme("cyan"));
-if (elements.themeEmber) elements.themeEmber.addEventListener("change", () => setTheme("ember"));
-if (elements.themeCustom) elements.themeCustom.addEventListener("change", () => setTheme("custom"));
-
-if (elements.applyCustomThemeButton) {
-    elements.applyCustomThemeButton.addEventListener("click", () => {
-        state.customTheme = normalizeCustomTheme({
-            background: elements.customBackgroundInput.value,
-            surface: elements.customSurfaceInput.value,
-            accent: elements.customAccentInput.value
-        });
-        state.theme = "custom";
-        saveState();
-        render();
-    });
-}
-
-if (elements.taskNameInput) {
-    elements.taskNameInput.addEventListener("input", () => {
-        if (elements.taskEmojiInput.dataset.manual !== "true") {
-            const cleanName = extractEmojiFromName(elements.taskNameInput.value).label;
-            elements.taskEmojiInput.value = suggestEmoji(cleanName);
-        }
-    });
-}
-
-if (elements.taskEmojiInput) {
-    elements.taskEmojiInput.addEventListener("input", () => {
-        elements.taskEmojiInput.dataset.manual = "true";
-    });
-}
-
-if (elements.suggestEmojiButton) {
-    elements.suggestEmojiButton.addEventListener("click", () => {
-        const cleanName = extractEmojiFromName(elements.taskNameInput.value).label;
-        elements.taskEmojiInput.value = suggestEmoji(cleanName);
-        elements.taskEmojiInput.dataset.manual = "false";
-    });
-}
 
 elements.taskXpInput.addEventListener("focus", () => {
     elements.taskXpInput.select();

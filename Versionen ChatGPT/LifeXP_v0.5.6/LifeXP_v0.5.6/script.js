@@ -1,7 +1,6 @@
 const STORAGE_KEY = "lifexp-state-v1";
-const SCHEMA_VERSION = 8;
+const SCHEMA_VERSION = 7;
 const DEFAULT_DAY_RESET_MINUTES = 4 * 60;
-let emojiMemoryCache = {};
 
 const defaultCatalog = [
     {
@@ -150,8 +149,7 @@ const defaultState = {
     customTheme: { background: "#11151d", surface: "#1c2330", accent: "#7b8cff" },
     tasks: defaultCatalog,
     history: [],
-    deletedTaskIds: [],
-    emojiMemory: {}
+    deletedTaskIds: []
 };
 
 let state = loadState();
@@ -248,10 +246,6 @@ function loadState() {
 
     try {
         const parsed = JSON.parse(saved);
-        emojiMemoryCache =
-            parsed.emojiMemory && typeof parsed.emojiMemory === "object"
-                ? { ...parsed.emojiMemory }
-                : {};
         const oldTasks = Array.isArray(parsed.tasks) ? parsed.tasks : [];
         const deletedTaskIds = Array.isArray(parsed.deletedTaskIds)
             ? parsed.deletedTaskIds.map(String)
@@ -340,8 +334,7 @@ function loadState() {
             customTheme: normalizeCustomTheme(parsed.customTheme),
             tasks: migratedTasks,
             history: Array.isArray(parsed.history) ? parsed.history : [],
-            deletedTaskIds,
-            emojiMemory: emojiMemoryCache
+            deletedTaskIds
         };
     } catch (error) {
         console.error("Gespeicherte Daten konnten nicht geladen werden.", error);
@@ -472,258 +465,41 @@ function extractEmojiFromName(name) {
     };
 }
 
-function normalizeEmojiText(value) {
-    return String(value || "")
-        .toLowerCase()
-        .replace(/ß/g, "ss")
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-z0-9äöü\s-]/gi, " ")
-        .replace(/[-_/]+/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-}
-
-function emojiTokens(value) {
-    return normalizeEmojiText(value)
-        .split(" ")
-        .filter((token) => token.length >= 2);
-}
-
-function levenshteinDistance(a, b) {
-    if (a === b) return 0;
-    if (!a.length) return b.length;
-    if (!b.length) return a.length;
-
-    const row = Array.from({ length: b.length + 1 }, (_, i) => i);
-
-    for (let i = 1; i <= a.length; i += 1) {
-        let previous = row[0];
-        row[0] = i;
-
-        for (let j = 1; j <= b.length; j += 1) {
-            const temp = row[j];
-            const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-            row[j] = Math.min(
-                row[j] + 1,
-                row[j - 1] + 1,
-                previous + cost
-            );
-            previous = temp;
-        }
-    }
-
-    return row[b.length];
-}
-
-const EMOJI_CONCEPTS = [
-    { emoji: "⛏️", keywords: ["minecraft", "mine craft", "mining", "erz abbauen", "abbauen", "spitzhacke"] },
-    { emoji: "🎮", keywords: ["gaming", "game", "games", "videospiel", "videospiele", "zocken", "spielen", "playstation", "ps5", "xbox", "steam", "konsole", "pc spiel"] },
-    { emoji: "🛒", keywords: ["einkauf", "einkaufen", "einkaufen gehen", "supermarkt", "lebensmittel kaufen", "shopping lebensmittel", "wocheneinkauf"] },
-    { emoji: "🛍️", keywords: ["shopping", "shoppen", "kleidung kaufen", "sachen kaufen", "laden gehen", "geschenke kaufen"] },
-    { emoji: "🧹", keywords: ["putzen", "sauber machen", "saubermachen", "wohnung putzen", "zimmer putzen", "aufräumen", "aufräumen", "ordnung machen", "kehren", "fegen", "staub wischen", "staubwischen"] },
-    { emoji: "🧽", keywords: ["wischen", "abwischen", "bad putzen", "küche putzen", "oberflächen reinigen", "spülen reinigen", "schrubben"] },
-    { emoji: "🧺", keywords: ["wäsche", "waesche", "waschen", "wäsche waschen", "waschmaschine", "kleidung waschen", "wäsche aufhängen", "waesche aufhaengen"] },
-    { emoji: "🗑️", keywords: ["müll", "muell", "abfall", "müll rausbringen", "müll wegbringen", "mülleimer", "papierkorb leeren", "recycling"] },
-    { emoji: "🪥", keywords: ["zähne putzen", "zaehne putzen", "zahnpflege", "zahnbürste", "zahnbuerste", "zähne", "zaehne"] },
-    { emoji: "🦷", keywords: ["zahnarzt", "zahn", "zahnreinigung", "zahntermin"] },
-    { emoji: "🚿", keywords: ["duschen", "dusche", "baden", "körperpflege", "koerperpflege", "waschen gehen"] },
-    { emoji: "🧴", keywords: ["hautpflege", "creme", "eincremen", "sonnencreme", "pflege"] },
-    { emoji: "🪒", keywords: ["rasieren", "rasur", "bart rasieren"] },
-    { emoji: "💊", keywords: ["medikament", "medikamente", "tablette", "tabletten", "vitamin", "vitamine", "supplement", "nahrungsergänzung", "nahrungsergaenzung", "pille nehmen"] },
-    { emoji: "🥄", keywords: ["kreatin", "creatin", "proteinpulver", "pulver nehmen"] },
-    { emoji: "💧", keywords: ["wasser", "wasser trinken", "trinken", "hydrieren", "flasche wasser"] },
-    { emoji: "☕", keywords: ["kaffee", "coffee", "espresso", "cappuccino"] },
-    { emoji: "🍵", keywords: ["tee", "grüner tee", "gruener tee"] },
-    { emoji: "🥗", keywords: ["salat", "gesund essen", "gesundes essen", "gemüse", "gemuese", "healthy food", "gesund ernähren", "gesund ernaehren"] },
-    { emoji: "🍎", keywords: ["obst", "apfel", "frucht", "früchte", "fruechte"] },
-    { emoji: "🥦", keywords: ["brokkoli", "gemüse essen", "gemuese essen", "greens"] },
-    { emoji: "🍫", keywords: ["süßigkeiten", "suessigkeiten", "süßes", "suesses", "schokolade", "zucker", "snack", "naschen"] },
-    { emoji: "🍔", keywords: ["fast food", "burger", "junkfood", "junk food"] },
-    { emoji: "🍕", keywords: ["pizza"] },
-    { emoji: "🍺", keywords: ["bier", "alkohol trinken", "alkohol"] },
-    { emoji: "🚭", keywords: ["nicht rauchen", "rauchfrei", "zigarette vermeiden", "rauchen vermeiden"] },
-    { emoji: "🏃", keywords: ["joggen", "laufen", "rennen", "run", "running", "dauerlauf", "lauftraining"] },
-    { emoji: "🚶", keywords: ["spazieren", "spaziergang", "gehen", "walk", "walking", "runde gehen", "gassi"] },
-    { emoji: "👣", keywords: ["schritte", "10000 schritte", "10 000 schritte", "zehntausend schritte", "steps"] },
-    { emoji: "🏋️", keywords: ["sport", "training", "gym", "fitness", "krafttraining", "fitnessstudio", "workout", "hantel", "muskeln"] },
-    { emoji: "🤸", keywords: ["gymnastik", "turnen", "mobilität", "mobilitaet", "beweglichkeit"] },
-    { emoji: "🧘", keywords: ["yoga", "dehnen", "stretching", "rückengymnastik", "rueckengymnastik", "rückenübung", "rueckenuebung", "physio", "pilates", "meditation"] },
-    { emoji: "🚴", keywords: ["fahrrad", "radfahren", "bike", "cycling", "rad fahren"] },
-    { emoji: "🏊", keywords: ["schwimmen", "schwimmbad", "swimming"] },
-    { emoji: "⚽", keywords: ["fußball", "fussball", "football", "kicken"] },
-    { emoji: "🏀", keywords: ["basketball"] },
-    { emoji: "🎾", keywords: ["tennis"] },
-    { emoji: "🏓", keywords: ["tischtennis", "ping pong"] },
-    { emoji: "🥊", keywords: ["boxen", "boxing", "kampfsport"] },
-    { emoji: "🥾", keywords: ["wandern", "hiking", "wanderung"] },
-    { emoji: "🛌", keywords: ["ins bett", "bett gehen", "schlafen gehen", "früh schlafen", "frueh schlafen"] },
-    { emoji: "😴", keywords: ["schlaf", "schlafen", "ausschlafen", "schlafroutine", "powernap", "nap"] },
-    { emoji: "⏰", keywords: ["aufstehen", "wecker", "früh aufstehen", "frueh aufstehen", "rechtzeitig aufstehen"] },
-    { emoji: "📋", keywords: ["todo", "to do", "to-do", "liste öffnen", "liste oeffnen", "aufgabenliste", "checkliste", "plan öffnen", "plan oeffnen"] },
-    { emoji: "✅", keywords: ["abhaken", "erledigen", "erledigt", "fertig machen", "aufgabe abschließen", "aufgabe abschliessen", "todo erledigen"] },
-    { emoji: "🗓️", keywords: ["kalender", "termin", "termine", "planung", "woche planen", "tag planen", "schedule"] },
-    { emoji: "⏳", keywords: ["zeitmanagement", "pomodoro", "fokuszeit", "timer"] },
-    { emoji: "🎯", keywords: ["ziel", "ziele", "challenge", "vorhaben", "projektziel"] },
-    { emoji: "📖", keywords: ["lesen", "buch", "bücher", "buecher", "roman", "literatur", "read"] },
-    { emoji: "🎓", keywords: ["lernen", "studieren", "studium", "kurs", "weiterbildung", "prüfung lernen", "pruefung lernen", "schule"] },
-    { emoji: "📝", keywords: ["schreiben", "notizen", "notiz", "tagebuch", "journal", "aufschreiben", "text schreiben"] },
-    { emoji: "🧠", keywords: ["denken", "konzentrieren", "fokus", "mental", "gehirn", "achtsamkeit", "mindfulness"] },
-    { emoji: "🧩", keywords: ["rätsel", "raetsel", "puzzle", "logik"] },
-    { emoji: "💼", keywords: ["arbeit", "job", "arbeiten", "büro", "buero", "office", "beruf"] },
-    { emoji: "💻", keywords: ["computer", "pc", "laptop", "programmieren", "coding", "code", "software", "entwickeln"] },
-    { emoji: "📧", keywords: ["email", "e-mail", "mail", "mails", "postfach", "inbox"] },
-    { emoji: "📞", keywords: ["anrufen", "telefonieren", "telefonat", "call"] },
-    { emoji: "💬", keywords: ["nachricht", "schreiben antworten", "chat", "whatsapp", "antworten"] },
-    { emoji: "📦", keywords: ["paket", "paket abholen", "paket verschicken", "versand", "post"] },
-    { emoji: "📬", keywords: ["briefkasten", "post holen", "post öffnen", "post oeffnen"] },
-    { emoji: "💰", keywords: ["geld", "sparen", "finanzen", "budget", "konto", "vermögen", "vermoegen"] },
-    { emoji: "💳", keywords: ["rechnung bezahlen", "bezahlen", "zahlung", "karte", "kreditkarte"] },
-    { emoji: "🏦", keywords: ["bank", "überweisung", "ueberweisung", "banking"] },
-    { emoji: "📈", keywords: ["aktien", "börse", "boerse", "investment", "investieren", "depot", "rendite"] },
-    { emoji: "🧾", keywords: ["rechnung", "beleg", "quittung", "steuer", "steuererklärung", "steuererklaerung"] },
-    { emoji: "🧑‍🤝‍🧑", keywords: ["freunde", "freund treffen", "freunde treffen", "sozial", "menschen treffen", "social"] },
-    { emoji: "👨‍👩‍👧‍👦", keywords: ["familie", "eltern", "familie besuchen", "familie treffen"] },
-    { emoji: "❤️", keywords: ["partner", "freundin", "freund", "beziehung", "date", "liebe"] },
-    { emoji: "🐕", keywords: ["hund", "gassi gehen", "haustier", "dog"] },
-    { emoji: "🐈", keywords: ["katze", "cat"] },
-    { emoji: "🎸", keywords: ["gitarre", "gitarre spielen", "instrument", "musik machen"] },
-    { emoji: "🎹", keywords: ["klavier", "piano", "keyboard spielen"] },
-    { emoji: "🎵", keywords: ["musik", "musik hören", "musik hoeren", "song", "playlist"] },
-    { emoji: "🎧", keywords: ["podcast", "hörbuch", "hoerbuch", "kopfhörer", "kopfhoerer"] },
-    { emoji: "🎬", keywords: ["film", "kino", "movie", "serie", "netflix", "fernsehen"] },
-    { emoji: "📺", keywords: ["tv", "fernsehen schauen", "youtube"] },
-    { emoji: "📷", keywords: ["foto", "fotografieren", "kamera", "bilder machen"] },
-    { emoji: "🎨", keywords: ["malen", "zeichnen", "kunst", "design", "kreativ"] },
-    { emoji: "✂️", keywords: ["basteln", "schneiden", "handarbeit"] },
-    { emoji: "🌱", keywords: ["pflanzen", "pflanze gießen", "pflanzen giessen", "garten", "gärtnern", "gaertnern"] },
-    { emoji: "🪴", keywords: ["zimmerpflanze", "blumen gießen", "blumen giessen"] },
-    { emoji: "🍳", keywords: ["kochen", "essen kochen", "küche", "kueche", "meal prep"] },
-    { emoji: "🥣", keywords: ["frühstück", "fruehstueck", "müsli", "muesli"] },
-    { emoji: "🍽️", keywords: ["essen", "mittagessen", "abendessen", "mahlzeit"] },
-    { emoji: "🧼", keywords: ["hände waschen", "haende waschen", "seife", "hygiene"] },
-    { emoji: "🛏️", keywords: ["bett machen", "bett beziehen", "bettwäsche", "bettwaesche"] },
-    { emoji: "🚗", keywords: ["auto", "fahren", "autofahrt", "wagen", "car"] },
-    { emoji: "⛽", keywords: ["tanken", "benzin", "tankstelle", "sprit"] },
-    { emoji: "🔧", keywords: ["reparieren", "reparatur", "werkzeug", "handwerken", "fixen"] },
-    { emoji: "🛞", keywords: ["reifen", "räder", "raeder", "reifen wechseln"] },
-    { emoji: "🚌", keywords: ["bus", "öffis", "oeffis", "nahverkehr"] },
-    { emoji: "🚆", keywords: ["zug", "bahn", "deutsche bahn", "train"] },
-    { emoji: "✈️", keywords: ["flug", "fliegen", "reise", "urlaub", "airport", "flughafen"] },
-    { emoji: "🧳", keywords: ["koffer", "packen", "reise packen", "gepäck", "gepaeck"] },
-    { emoji: "🗺️", keywords: ["route planen", "reise planen", "karte", "navigation"] },
-    { emoji: "🏠", keywords: ["wohnung", "haus", "zuhause", "home"] },
-    { emoji: "🔑", keywords: ["schlüssel", "schluessel", "schloss", "wohnungsschlüssel"] },
-    { emoji: "🛠️", keywords: ["heimwerken", "bauen", "montieren", "möbel aufbauen", "moebel aufbauen"] },
-    { emoji: "🛒", keywords: ["drogerie", "aldi", "lidl", "rewe", "edeka", "kaufland"] },
-    { emoji: "💇", keywords: ["friseur", "haare schneiden", "haarschnitt"] },
-    { emoji: "👕", keywords: ["kleidung", "anziehen", "outfit", "klamotten"] },
-    { emoji: "👟", keywords: ["schuhe", "sneaker"] },
-    { emoji: "🩺", keywords: ["arzt", "arzttermin", "untersuchung", "gesundheitscheck", "doktor"] },
-    { emoji: "🏥", keywords: ["krankenhaus", "klinik"] },
-    { emoji: "🩸", keywords: ["blut", "bluttest", "blutabnahme"] },
-    { emoji: "💉", keywords: ["impfung", "impfen", "spritze"] },
-    { emoji: "🌞", keywords: ["sonne", "tageslicht", "rausgehen", "frische luft"] },
-    { emoji: "🌳", keywords: ["natur", "wald", "park", "draußen", "draussen"] },
-    { emoji: "📱", keywords: ["handy", "smartphone", "iphone", "telefon"] },
-    { emoji: "🚫", keywords: ["vermeiden", "nicht machen", "aufhören", "aufhoeren", "verzicht", "kein"] },
-    { emoji: "📵", keywords: ["weniger handy", "kein handy", "handypause", "digital detox", "social media vermeiden"] },
-    { emoji: "⏱️", keywords: ["zeit stoppen", "stoppuhr", "dauer messen"] },
-    { emoji: "🧘‍♂️", keywords: ["entspannen", "relaxen", "ruhe", "pause", "stress reduzieren"] },
-    { emoji: "🙏", keywords: ["dankbarkeit", "dankbar", "beten", "gebet"] },
-    { emoji: "🌬️", keywords: ["atmen", "atemübung", "atemuebung", "breathing"] },
-    { emoji: "🧊", keywords: ["kalt duschen", "eisbad", "kälte", "kaelte"] },
-    { emoji: "🔥", keywords: ["sauna", "wärme", "waerme"] },
-    { emoji: "⭐", keywords: ["wichtig", "priorität", "prioritaet", "extra", "bonus"] }
-];
-
-const GENERIC_EMOJI_FALLBACKS = [
-    { pattern: /\b(essen|mahlzeit|nahrung)\b/, emoji: "🍽️" },
-    { pattern: /\b(trinken|getrank)\b/, emoji: "🥤" },
-    { pattern: /\b(machen|erledigen|abschliessen|abschließen)\b/, emoji: "✅" },
-    { pattern: /\b(lernen|üben|ueben)\b/, emoji: "📚" },
-    { pattern: /\b(spielen|spiel)\b/, emoji: "🎮" },
-    { pattern: /\b(kaufen|einkauf)\b/, emoji: "🛒" },
-    { pattern: /\b(reinigen|putzen|sauber)\b/, emoji: "🧹" },
-    { pattern: /\b(fahren|fahrt)\b/, emoji: "🚗" },
-    { pattern: /\b(termin|treffen)\b/, emoji: "📅" }
-];
-
-function scoreEmojiConcept(text, tokens, concept) {
-    let score = 0;
-
-    for (const rawKeyword of concept.keywords) {
-        const keyword = normalizeEmojiText(rawKeyword);
-        if (!keyword) continue;
-
-        if (text === keyword) {
-            score = Math.max(score, 180 + keyword.length);
-            continue;
-        }
-
-        if (text.includes(keyword)) {
-            score = Math.max(score, 110 + Math.min(keyword.length, 30));
-        }
-
-        const keywordTokens = keyword.split(" ").filter(Boolean);
-        const matchedTokens = keywordTokens.filter((keywordToken) =>
-            tokens.includes(keywordToken)
-        ).length;
-
-        if (keywordTokens.length && matchedTokens === keywordTokens.length) {
-            score = Math.max(score, 75 + matchedTokens * 12);
-        } else if (matchedTokens > 0) {
-            score = Math.max(score, 34 + matchedTokens * 10);
-        }
-
-        if (keywordTokens.length === 1 && keywordTokens[0].length >= 5) {
-            for (const token of tokens) {
-                if (token.length < 5) continue;
-                const distance = levenshteinDistance(token, keywordTokens[0]);
-
-                if (distance === 1) {
-                    score = Math.max(score, 42);
-                } else if (distance === 2 && Math.max(token.length, keywordTokens[0].length) >= 8) {
-                    score = Math.max(score, 25);
-                }
-            }
-        }
-    }
-
-    return score;
-}
-
 function suggestEmoji(name) {
-    const text = normalizeEmojiText(name);
-    if (!text) return "🎯";
+    const text = String(name || "").toLowerCase();
+    const rules = [
+        [/jogg|lauf|rennen|run/, "🏃"],
+        [/spazier|gehen|walk/, "🚶"],
+        [/sport|gym|training|fitness|kraft/, "🏋️"],
+        [/rücken|dehn|stretch|physio|yoga/, "🧘"],
+        [/zahn|putzen/, "🪥"],
+        [/schritt|10\.?000/, "👣"],
+        [/müll|abfall|trash/, "🗑️"],
+        [/salat|gemüse|gesund essen/, "🥗"],
+        [/süß|zucker|schokolade|snack/, "🍫"],
+        [/lesen|buch/, "📖"],
+        [/todo|to-do|liste|plan/, "📋"],
+        [/abhaken|erledigen|fertig/, "✅"],
+        [/vitamin|tablette|medikament/, "💊"],
+        [/kreatin|creatin/, "🥄"],
+        [/wasser|trinken/, "💧"],
+        [/schlaf|bett/, "😴"],
+        [/aufräum|putzen|ordnung|haushalt/, "🧹"],
+        [/lernen|studier|kurs/, "🎓"],
+        [/arbeit|job|büro/, "💼"],
+        [/geld|sparen|finanz/, "💰"],
+        [/freund|familie|sozial/, "👥"],
+        [/meditation|atem|achtsam/, "🧠"],
+        [/fahrrad|radfahren|bike/, "🚴"],
+        [/schwimm/, "🏊"],
+        [/gitarre|musik|instrument/, "🎸"]
+    ];
 
-    const remembered = emojiMemoryCache[text];
-    if (remembered) return remembered;
-
-    const tokens = emojiTokens(text);
-    let bestEmoji = "";
-    let bestScore = 0;
-
-    for (const concept of EMOJI_CONCEPTS) {
-        const score = scoreEmojiConcept(text, tokens, concept);
-
-        if (score > bestScore) {
-            bestScore = score;
-            bestEmoji = concept.emoji;
-        }
+    for (const [pattern, emoji] of rules) {
+        if (pattern.test(text)) return emoji;
     }
 
-    if (bestEmoji && bestScore >= 25) {
-        return bestEmoji;
-    }
-
-    for (const fallback of GENERIC_EMOJI_FALLBACKS) {
-        if (fallback.pattern.test(text)) {
-            return fallback.emoji;
-        }
-    }
-
-    return "🎯";
+    return "✨";
 }
 
 function splitEmojiAndName(name, emoji = "") {
@@ -1984,7 +1760,7 @@ function openTaskDialog(taskId = "") {
     } else {
         elements.taskDialogTitle.textContent = "Neue Aktivität";
         elements.taskNameInput.value = "";
-        elements.taskEmojiInput.value = "🎯";
+        elements.taskEmojiInput.value = "✨";
         elements.taskEmojiInput.dataset.manual = "false";
         elements.taskXpInput.value = 10;
         elements.taskRepeatableInput.checked = false;
@@ -2022,15 +1798,6 @@ function saveTask(event) {
     if (!Number.isFinite(xp)) {
         window.alert("Bitte gib einen gültigen XP-Wert ein.");
         return;
-    }
-
-    state.emojiMemory = state.emojiMemory && typeof state.emojiMemory === "object"
-        ? state.emojiMemory
-        : {};
-    const memoryKey = normalizeEmojiText(name);
-    if (memoryKey && emoji) {
-        state.emojiMemory[memoryKey] = emoji;
-        emojiMemoryCache[memoryKey] = emoji;
     }
 
     if (editingId) {

@@ -395,52 +395,6 @@
                             <small>Weich und warm</small>
                         </span>
                     </label>
-
-                    <label class="theme-choice">
-                        <input type="radio" name="appTheme" value="cyber" id="themeCyber">
-                        <span class="theme-preview theme-preview-cyber" aria-hidden="true"><i></i><i></i><i></i></span>
-                        <span><strong>Cyber Lime</strong><small>Dunkel mit Neon-Grün</small></span>
-                    </label>
-
-                    <label class="theme-choice">
-                        <input type="radio" name="appTheme" value="violet" id="themeViolet">
-                        <span class="theme-preview theme-preview-violet" aria-hidden="true"><i></i><i></i><i></i></span>
-                        <span><strong>Neon Violet</strong><small>Dunkel mit kräftigem Violett</small></span>
-                    </label>
-
-                    <label class="theme-choice">
-                        <input type="radio" name="appTheme" value="cyan" id="themeCyan">
-                        <span class="theme-preview theme-preview-cyan" aria-hidden="true"><i></i><i></i><i></i></span>
-                        <span><strong>Neon Cyan</strong><small>Kühles dunkles Cyan</small></span>
-                    </label>
-
-                    <label class="theme-choice">
-                        <input type="radio" name="appTheme" value="ember" id="themeEmber">
-                        <span class="theme-preview theme-preview-ember" aria-hidden="true"><i></i><i></i><i></i></span>
-                        <span><strong>Neon Ember</strong><small>Dunkel mit Orange-Rot</small></span>
-                    </label>
-
-                    <label class="theme-choice theme-choice-custom">
-                        <input type="radio" name="appTheme" value="custom" id="themeCustom">
-                        <span class="theme-preview theme-preview-custom" aria-hidden="true"><i></i><i></i><i></i></span>
-                        <span><strong>Eigene Farben</strong><small>Drei Farben frei wählen</small></span>
-                    </label>
-                </div>
-
-                <div class="custom-theme-editor">
-                    <div class="custom-color-field">
-                        <label for="customBackgroundInput">Hintergrund</label>
-                        <input id="customBackgroundInput" type="color" value="#11151d">
-                    </div>
-                    <div class="custom-color-field">
-                        <label for="customSurfaceInput">Karten</label>
-                        <input id="customSurfaceInput" type="color" value="#1c2330">
-                    </div>
-                    <div class="custom-color-field">
-                        <label for="customAccentInput">Akzent</label>
-                        <input id="customAccentInput" type="color" value="#7b8cff">
-                    </div>
-                    <button id="applyCustomThemeButton" class="primary-button custom-theme-button" type="button">Eigene Farben anwenden</button>
                 </div>
             </section>
 
@@ -496,35 +450,17 @@
 
             <input id="editingTaskId" type="hidden">
 
-            <div class="emoji-name-row">
-                <label class="form-field emoji-field" for="taskEmojiInput">
-                    Emoji
-                    <div class="emoji-input-row">
-                        <input
-                            id="taskEmojiInput"
-                            class="emoji-input"
-                            type="text"
-                            maxlength="16"
-                            value="✨"
-                            autocomplete="off"
-                            aria-label="Emoji der Aktivität"
-                        >
-                        <button id="suggestEmojiButton" class="small-button" type="button">Vorschlagen</button>
-                    </div>
-                </label>
-
-                <label class="form-field name-field" for="taskNameInput">
-                    Name
-                    <input
-                        id="taskNameInput"
-                        type="text"
-                        maxlength="48"
-                        placeholder="Zum Beispiel: Joggen"
-                        autocomplete="off"
-                        required
-                    >
-                </label>
-            </div>
+            <label class="form-field" for="taskNameInput">
+                Name
+                <input
+                    id="taskNameInput"
+                    type="text"
+                    maxlength="48"
+                    placeholder="Zum Beispiel: 🏃 Joggen"
+                    autocomplete="off"
+                    required
+                >
+            </label>
 
             <label class="form-field" for="taskXpInput">
                 XP-Wert
@@ -551,7 +487,7 @@
 
             <p class="form-help">
                 Standardmäßig kann eine Aktivität nur einmal pro LifeXP-Tag gewertet werden.
-                LifeXP schlägt anhand des Namens automatisch ein Emoji vor; du kannst es jederzeit ändern.
+                Emojis kannst du direkt in den Namen einfügen; für Minuspunkte z. B. −10.
             </p>
 
             <div class="dialog-actions">
