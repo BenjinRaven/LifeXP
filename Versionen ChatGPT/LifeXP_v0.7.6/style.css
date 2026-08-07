@@ -3563,10 +3563,10 @@ body.retro-entry-mode #todayView .goal-card {
 
 
 /* =========================================================
-   LifeXP v0.7.7 – gerichtetes Drag & Drop auf stabiler v0.7.2
+   LifeXP v0.7.6 – Drag Sensitivity Fix auf stabiler v0.7.2
    ========================================================= */
 
-/* Keine neue Slot-Engine. Die bestehenden Kartenanimationen bleiben ruhig. */
+/* Keine neue Drag-Engine. Nur etwas schnellere visuelle Rückmeldung. */
 body.live-reordering .task-grid .task-tile:not(.live-floating-card),
 body.live-reordering .task-grid .live-drag-placeholder {
     transition:
@@ -3576,7 +3576,7 @@ body.live-reordering .task-grid .live-drag-placeholder {
         box-shadow 110ms ease-out;
 }
 
-/* Balken weiterhin im Look von v0.7.0/v0.7.2. */
+/* Wochenbalken weiter im v0.7.0/v0.7.2-Look. */
 .week-bar {
     border-radius: 8px 8px 4px 4px !important;
 }

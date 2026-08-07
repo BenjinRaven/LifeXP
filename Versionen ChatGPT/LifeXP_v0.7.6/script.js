@@ -2167,11 +2167,11 @@ function moveGridPlaceholderByOverlap(placeholder, deltaX = 0, deltaY = 0) {
         if (primarilyHorizontal) {
             // Bei Links/Rechts-Bewegung zählt vor allem die horizontale
             // Überdeckung. Eine leichte vertikale Abweichung ist erlaubt.
-            score = yRatio >= 0.30 ? xRatio : 0;
+            score = yRatio >= 0.28 ? xRatio : 0;
         } else if (primarilyVertical) {
             // Bei Hoch/Runter-Bewegung bleibt die Karte bevorzugt in ihrer
             // Spalte. Dadurch springt eine rechte Kachel nicht zuerst nach links.
-            score = xRatio >= 0.30 ? yRatio : 0;
+            score = xRatio >= 0.28 ? yRatio : 0;
         } else {
             // Diagonale Bewegung: reale Flächenüberdeckung entscheidet.
             score = Math.sqrt(xRatio * yRatio);
@@ -2185,7 +2185,7 @@ function moveGridPlaceholderByOverlap(placeholder, deltaX = 0, deltaY = 0) {
 
     // Schon ab ungefähr einem Drittel Überdeckung wird der neue Slot aktiv.
     // Vorher waren gefühlt etwa 50 % nötig.
-    if (!bestTarget || bestScore < 0.30) return;
+    if (!bestTarget || bestScore < 0.27) return;
 
     const targetRect = bestTarget.getBoundingClientRect();
     const targetCenterX = targetRect.left + targetRect.width / 2;
@@ -2796,15 +2796,15 @@ function setupTodayDrag(item, handle, taskId) {
 
         event.preventDefault();
 
-        const totalDeltaX = touch.clientX - startX;
-        const totalDeltaY = touch.clientY - startY;
+        const deltaX = touch.clientX - lastDragX;
+        const deltaY = touch.clientY - lastDragY;
 
         moveLiveCardDrag(touch.clientX, touch.clientY);
 
         moveGridPlaceholderByOverlap(
             getLiveDragPlaceholder(),
-            totalDeltaX,
-            totalDeltaY
+            deltaX,
+            deltaY
         );
 
         lastDragX = touch.clientX;
@@ -2867,38 +2867,15 @@ function moveDraggedItemBeforeOrAfter(target, clientY, draggedItem) {
 function moveDraggedGridItem(target, clientX, clientY, draggedItem) {
     if (!draggedItem || target === draggedItem) return;
 
-    const targetRect = target.getBoundingClientRect();
-    const draggedRect = draggedItem.getBoundingClientRect();
+    const rect = target.getBoundingClientRect();
+    const horizontalRatio = (clientX - rect.left) / Math.max(rect.width, 1);
+    const verticalRatio = (clientY - rect.top) / Math.max(rect.height, 1);
 
-    const targetCenterX = targetRect.left + targetRect.width / 2;
-    const targetCenterY = targetRect.top + targetRect.height / 2;
-    const draggedCenterX = draggedRect.left + draggedRect.width / 2;
-    const draggedCenterY = draggedRect.top + draggedRect.height / 2;
-
-    const dx = targetCenterX - draggedCenterX;
-    const dy = targetCenterY - draggedCenterY;
-
-    /*
-     * Entscheidend ist jetzt die visuelle Richtung des Ziel-Feldes:
-     *
-     * links  -> davor einsetzen
-     * rechts -> danach einsetzen
-     * oben   -> davor einsetzen
-     * unten  -> danach einsetzen
-     *
-     * Dadurch ist die obere/untere Hälfte der Zielkachel für Links/Rechts
-     * völlig egal. Ein Drag nach links-unten funktioniert genauso früh wie
-     * ein Drag nach links-oben.
-     */
-    const horizontalMove = Math.abs(dx) > Math.abs(dy) * 0.72;
-
-    let insertAfter;
-
-    if (horizontalMove) {
-        insertAfter = dx > 0;
-    } else {
-        insertAfter = dy > 0;
-    }
+    const insertAfter =
+        verticalRatio > 0.43 ||
+        (verticalRatio >= 0.20 &&
+            verticalRatio <= 0.43 &&
+            horizontalRatio > 0.36);
 
     if (insertAfter) {
         target.after(draggedItem);
