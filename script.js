@@ -1741,8 +1741,7 @@ function createManageItem(task, active) {
         deleteButton.textContent = "Löschen";
         deleteButton.addEventListener("click", () => permanentlyDeleteTask(task.id));
 
-        activateButton.classList.add("desktop-only-action");
-        editButton.classList.add("desktop-only-action");
+        editButton.classList.remove("desktop-only-action");
         actions.append(activateButton, deleteButton, editButton);
     } else {
         const hideButton = document.createElement("button");
@@ -1751,7 +1750,7 @@ function createManageItem(task, active) {
         hideButton.textContent = "Ausblenden";
         hideButton.addEventListener("click", () => moveTaskToAvailable(task.id));
 
-        editButton.classList.add("desktop-only-action");
+        editButton.classList.remove("desktop-only-action");
         actions.append(hideButton, editButton);
     }
 
