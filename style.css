@@ -3583,16 +3583,19 @@ body.live-reordering .task-grid .live-drag-placeholder {
 
 
 /* =========================================================
-   LifeXP v0.7.8 – Mobile Drag Spalten-/Zeilen-Lock
+   LifeXP v0.7.10 – Mobile Today Drag stabilisiert
    ========================================================= */
 
-/* Etwas weniger Animation während des Sortierens reduziert optisches Flackern,
-   ohne das direkte "Karte klebt am Finger"-Gefühl zu verlieren. */
+/*
+ * Mobile nutzt jetzt eingefrorene visuelle Grid-Koordinaten.
+ * Dadurch verändern sich die Entscheidungsgrenzen während des Draggens nicht
+ * mehr, wenn andere Karten ihren DOM-Platz wechseln.
+ */
 body.live-reordering .task-grid .task-tile:not(.live-floating-card),
 body.live-reordering .task-grid .live-drag-placeholder {
     transition:
-        transform 90ms ease-out,
-        background-color 100ms ease-out,
-        border-color 100ms ease-out,
-        box-shadow 100ms ease-out;
+        transform 105ms ease-out,
+        background-color 110ms ease-out,
+        border-color 110ms ease-out,
+        box-shadow 110ms ease-out;
 }

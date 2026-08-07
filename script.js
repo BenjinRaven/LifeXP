@@ -2125,168 +2125,178 @@ function movePlaceholderBeforeOrAfter(target, clientY, placeholder) {
     }
 }
 
-function moveGridPlaceholderByOverlap(placeholder, deltaX = 0, deltaY = 0) {
-    if (!placeholder || !liveDragState?.item || !elements.todayTaskGrid) return;
+let todayTouchGridModel = null;
 
-    const draggedRect = liveDragState.item.getBoundingClientRect();
-    const draggedCenterX = draggedRect.left + draggedRect.width / 2;
-    const draggedCenterY = draggedRect.top + draggedRect.height / 2;
+function buildTodayTouchGridModel(taskId, pointerX, pointerY) {
+    if (!elements.todayTaskGrid) return null;
 
-    const candidates = Array.from(
+    const tiles = Array.from(
         elements.todayTaskGrid.querySelectorAll(".task-tile[data-task-id]")
-    ).filter((item) => item !== liveDragState.item);
+    );
 
-    if (!candidates.length) return;
+    const draggedIndex = tiles.findIndex((tile) => tile.dataset.taskId === taskId);
+    if (draggedIndex < 0) return null;
 
-    /*
-     * Wichtig für Mobile:
-     * Die Bewegungsrichtung kommt aus der GESAMTBEWEGUNG seit Drag-Start.
-     * Wenn überwiegend nach oben/unten gezogen wird, dürfen nur Karten aus
-     * derselben visuellen Spalte Kandidaten sein.
-     * Wenn überwiegend links/rechts gezogen wird, nur Karten derselben Zeile.
-     *
-     * Das verhindert den Fehler aus dem Video:
-     * rechts unten -> gerade nach oben -> zuerst links.
-     */
-    const absX = Math.abs(deltaX);
-    const absY = Math.abs(deltaY);
+    const rects = tiles.map((tile) => tile.getBoundingClientRect());
+    const cols = state.gridSize === 3 ? 3 : 2;
+    const rows = Math.ceil(tiles.length / cols);
+    const draggedRect = rects[draggedIndex];
 
-    const primarilyHorizontal = absX > absY * 1.10;
-    const primarilyVertical = absY > absX * 1.10;
-
-    let bestTarget = null;
-    let bestScore = -Infinity;
-
-    candidates.forEach((target) => {
-        const rect = target.getBoundingClientRect();
-        const targetCenterX = rect.left + rect.width / 2;
-        const targetCenterY = rect.top + rect.height / 2;
-
-        const overlapX = Math.max(
-            0,
-            Math.min(draggedRect.right, rect.right) -
-                Math.max(draggedRect.left, rect.left)
-        );
-
-        const overlapY = Math.max(
-            0,
-            Math.min(draggedRect.bottom, rect.bottom) -
-                Math.max(draggedRect.top, rect.top)
-        );
-
-        const xRatio = overlapX / Math.max(1, Math.min(draggedRect.width, rect.width));
-        const yRatio = overlapY / Math.max(1, Math.min(draggedRect.height, rect.height));
-
-        const centerDx = Math.abs(targetCenterX - draggedCenterX);
-        const centerDy = Math.abs(targetCenterY - draggedCenterY);
-
-        let score = -Infinity;
-
-        if (primarilyVertical) {
-            // Nur die gleiche visuelle Spalte akzeptieren.
-            // Die erlaubte seitliche Abweichung ist bewusst großzügig,
-            // aber kleiner als der Abstand zur Nachbarspalte.
-            const sameColumn =
-                centerDx <= Math.max(18, draggedRect.width * 0.58);
-
-            if (!sameColumn) return;
-
-            // Früher reagieren: ~27 % vertikale Überdeckung reicht.
-            if (yRatio < 0.27) return;
-
-            // Je besser vertikal überlappt und je sauberer die Spalte passt,
-            // desto höher der Score.
-            score =
-                yRatio * 2.2 -
-                centerDx / Math.max(1, draggedRect.width);
-        } else if (primarilyHorizontal) {
-            // Nur die gleiche visuelle Zeile akzeptieren.
-            const sameRow =
-                centerDy <= Math.max(18, draggedRect.height * 0.58);
-
-            if (!sameRow) return;
-
-            // Links-unten und links-oben werden gleich behandelt.
-            if (xRatio < 0.27) return;
-
-            score =
-                xRatio * 2.2 -
-                centerDy / Math.max(1, draggedRect.height);
-        } else {
-            /*
-             * Bei einer echten diagonalen Bewegung wird die räumlich
-             * passendste Karte gewählt. Hier entscheidet nicht mehr die
-             * DOM-Reihenfolge bei Gleichstand, sondern zusätzlich die
-             * Entfernung der Mittelpunkte.
-             */
-            const areaScore = Math.sqrt(xRatio * yRatio);
-            if (areaScore < 0.28) return;
-
-            const normalizedDistance =
-                Math.hypot(
-                    centerDx / Math.max(1, draggedRect.width),
-                    centerDy / Math.max(1, draggedRect.height)
-                );
-
-            score = areaScore * 2 - normalizedDistance * 0.35;
-        }
-
-        if (score > bestScore) {
-            bestScore = score;
-            bestTarget = target;
-        }
+    const xCenters = Array.from({ length: cols }, (_, col) => {
+        const rect = rects[Math.min(col, rects.length - 1)];
+        return rect.left + rect.width / 2;
     });
 
-    if (!bestTarget) return;
+    const yCenters = Array.from({ length: rows }, (_, row) => {
+        const rect = rects[Math.min(row * cols, rects.length - 1)];
+        return rect.top + rect.height / 2;
+    });
 
-    const targetRect = bestTarget.getBoundingClientRect();
-    const targetCenterX = targetRect.left + targetRect.width / 2;
-    const targetCenterY = targetRect.top + targetRect.height / 2;
+    todayTouchGridModel = {
+        total: tiles.length,
+        cols,
+        rows,
+        xCenters,
+        yCenters,
+        currentIndex: draggedIndex,
+        currentRow: Math.floor(draggedIndex / cols),
+        currentCol: draggedIndex % cols,
+        offsetX: pointerX - draggedRect.left,
+        offsetY: pointerY - draggedRect.top,
+        width: draggedRect.width,
+        height: draggedRect.height,
+        lastPointerX: pointerX,
+        lastPointerY: pointerY,
+        lastSwitchAt: 0
+    };
 
-    /*
-     * Bei vertikalem Drag entscheidet ausschließlich oben/unten.
-     * Bei horizontalem Drag ausschließlich links/rechts.
-     * Dadurch kann eine kleine diagonale Fingerabweichung nicht mehr
-     * plötzlich einen Nachbar-Slot auslösen.
-     */
-    let insertAfter;
+    return todayTouchGridModel;
+}
 
-    if (primarilyVertical) {
-        /*
-         * ZIEL OBERHALB:
-         * Der Platzhalter muss VOR die Zielkachel.
-         * Sonst ergibt das CSS-Grid aus der DOM-Reihenfolge zuerst
-         * den linken Slot der nächsten Zeile – genau der bisherige Fehler.
-         *
-         * ZIEL UNTERHALB:
-         * Der Platzhalter kommt NACH die Zielkachel.
-         */
-        insertAfter = targetCenterY > draggedCenterY;
-    } else if (primarilyHorizontal) {
-        /*
-         * ZIEL LINKS:
-         * VOR die Zielkachel.
-         *
-         * ZIEL RECHTS:
-         * NACH die Zielkachel.
-         */
-        insertAfter = targetCenterX > draggedCenterX;
-    } else {
-        const verticalDistance = Math.abs(targetCenterY - draggedCenterY);
-        const horizontalDistance = Math.abs(targetCenterX - draggedCenterX);
+function clearTodayTouchGridModel() {
+    todayTouchGridModel = null;
+}
 
-        if (horizontalDistance > verticalDistance) {
-            insertAfter = targetCenterX > draggedCenterX;
+function placeTodayPlaceholderAtIndex(placeholder, desiredIndex) {
+    if (!placeholder || !elements.todayTaskGrid) return;
+
+    const siblings = Array.from(
+        elements.todayTaskGrid.querySelectorAll(".task-tile[data-task-id]")
+    );
+
+    const safeIndex = Math.max(
+        0,
+        Math.min(desiredIndex, siblings.length)
+    );
+
+    if (safeIndex >= siblings.length) {
+        const addTile = elements.todayTaskGrid.querySelector(".add-task-tile");
+
+        if (addTile) {
+            elements.todayTaskGrid.insertBefore(placeholder, addTile);
         } else {
-            insertAfter = targetCenterY > draggedCenterY;
+            elements.todayTaskGrid.appendChild(placeholder);
+        }
+
+        return;
+    }
+
+    elements.todayTaskGrid.insertBefore(
+        placeholder,
+        siblings[safeIndex]
+    );
+}
+
+function updateTodayTouchGrid(placeholder, pointerX, pointerY) {
+    const model = todayTouchGridModel;
+
+    if (!model || !placeholder || !liveDragState?.item) return;
+
+    const now = performance.now();
+
+    const frameDx = pointerX - model.lastPointerX;
+    const frameDy = pointerY - model.lastPointerY;
+
+    model.lastPointerX = pointerX;
+    model.lastPointerY = pointerY;
+
+    // Die tatsächliche Kartenmitte, nicht nur der Finger.
+    const centerX =
+        pointerX - model.offsetX + model.width / 2;
+    const centerY =
+        pointerY - model.offsetY + model.height / 2;
+
+    // Kleine Fingerunruhe darf keine Richtung auslösen.
+    const movementEpsilon = 2.5;
+
+    let nextRow = model.currentRow;
+    let nextCol = model.currentCol;
+
+    // Nach einem Wechsel kurz keine weitere Umsortierung.
+    // Da die Geometrie eingefroren ist, dient dies nur gegen Finger-Jitter,
+    // nicht zum Kaschieren von DOM-Rückkopplungen.
+    const canSwitch = now - model.lastSwitchAt >= 130;
+
+    if (canSwitch && frameDx < -movementEpsilon && model.currentCol > 0) {
+        const current = model.xCenters[model.currentCol];
+        const neighbor = model.xCenters[model.currentCol - 1];
+        const distance = current - neighbor;
+
+        // 38 % des Weges zur linken Nachbarspalte.
+        if (centerX <= current - distance * 0.38) {
+            nextCol = model.currentCol - 1;
+        }
+    } else if (
+        canSwitch &&
+        frameDx > movementEpsilon &&
+        model.currentCol < model.cols - 1
+    ) {
+        const current = model.xCenters[model.currentCol];
+        const neighbor = model.xCenters[model.currentCol + 1];
+        const distance = neighbor - current;
+
+        if (centerX >= current + distance * 0.38) {
+            nextCol = model.currentCol + 1;
         }
     }
 
-    if (insertAfter) {
-        bestTarget.after(placeholder);
-    } else {
-        bestTarget.before(placeholder);
+    if (canSwitch && frameDy < -movementEpsilon && model.currentRow > 0) {
+        const current = model.yCenters[model.currentRow];
+        const neighbor = model.yCenters[model.currentRow - 1];
+        const distance = current - neighbor;
+
+        // Gerade nach oben verändert ausschließlich die Zeile.
+        if (centerY <= current - distance * 0.38) {
+            nextRow = model.currentRow - 1;
+        }
+    } else if (
+        canSwitch &&
+        frameDy > movementEpsilon &&
+        model.currentRow < model.rows - 1
+    ) {
+        const current = model.yCenters[model.currentRow];
+        const neighbor = model.yCenters[model.currentRow + 1];
+        const distance = neighbor - current;
+
+        if (centerY >= current + distance * 0.38) {
+            nextRow = model.currentRow + 1;
+        }
     }
+
+    let desiredIndex = nextRow * model.cols + nextCol;
+    desiredIndex = Math.max(
+        0,
+        Math.min(desiredIndex, model.total - 1)
+    );
+
+    if (desiredIndex === model.currentIndex) return;
+
+    placeTodayPlaceholderAtIndex(placeholder, desiredIndex);
+
+    model.currentIndex = desiredIndex;
+    model.currentRow = Math.floor(desiredIndex / model.cols);
+    model.currentCol = desiredIndex % model.cols;
+    model.lastSwitchAt = now;
 }
 function clearDeactivateDropIndicator() {
     manageDeactivateDropActive = false;
@@ -2855,6 +2865,13 @@ function setupTodayDrag(item, handle, taskId) {
             touchDraggedTodayItem = item;
             touchDragStarted = true;
             item.dataset.justDragged = "true";
+
+            buildTodayTouchGridModel(
+                taskId,
+                startX,
+                startY
+            );
+
             item.classList.add("dragging");
             document.body.classList.add("live-reordering");
             beginLiveCardDrag(item, startX, startY, "today-placeholder");
@@ -2874,15 +2891,12 @@ function setupTodayDrag(item, handle, taskId) {
 
         event.preventDefault();
 
-        const totalDeltaX = touch.clientX - startX;
-        const totalDeltaY = touch.clientY - startY;
-
         moveLiveCardDrag(touch.clientX, touch.clientY);
 
-        moveGridPlaceholderByOverlap(
+        updateTodayTouchGrid(
             getLiveDragPlaceholder(),
-            totalDeltaX,
-            totalDeltaY
+            touch.clientX,
+            touch.clientY
         );
 
         lastDragX = touch.clientX;
@@ -2911,6 +2925,7 @@ function setupTodayDrag(item, handle, taskId) {
 
         touchDraggedTodayItem = null;
         draggedTodayTaskId = null;
+        clearTodayTouchGridModel();
         touchDragStarted = false;
     };
 
@@ -2924,6 +2939,7 @@ function setupTodayDrag(item, handle, taskId) {
         }
         touchDraggedTodayItem = null;
         draggedTodayTaskId = null;
+        clearTodayTouchGridModel();
         touchDragStarted = false;
     }, { passive: true });
 
