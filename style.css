@@ -3540,5 +3540,5 @@ body.retro-entry-mode #todayView .goal-card {
 
 /* Wochenbalken mit stärker abgerundeter Oberkante. */
 .week-bar {
-    border-radius: 12px 12px 4px 4px !important;
+    border-radius: 8px 8px 4px 4px !important;
 }
