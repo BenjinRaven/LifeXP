@@ -62,3 +62,14 @@ Diese Datei sammelt Ideen, die noch nicht fest für eine bestimmte Version einge
 - gemeinsame Challenges
 - App Store
 - Android-App
+Gamification-Ideen
+Levelsystem
+Badges
+Cloud-Synchronisierung
+Benutzerkonto
+Widgets
+Apple Health
+Google Fit
+Apple Watch
+Android-App
+Desktop-App

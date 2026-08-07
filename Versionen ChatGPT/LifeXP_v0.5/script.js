@@ -835,23 +835,18 @@ function renderWeeklyChart() {
 
     const values = weekDays.map((date) => getDayXp(toDateKey(date)));
     const maxValue = Math.max(state.dailyGoal, ...values, 1);
-
-    // Die Wochenansicht hat immer mindestens 80 XP Platz nach oben.
-    // Sobald ein Tag höher liegt, wächst die Skala automatisch in 20er-Schritten
-    // und lässt weiterhin etwas Luft oberhalb des höchsten Balkens.
-    const desiredMaximum = Math.max(80, maxValue + 10, state.dailyGoal + 30);
-    const axisMax = Math.max(80, Math.ceil(desiredMaximum / 20) * 20);
-    const goalPercent = clamp((state.dailyGoal / axisMax) * 100, 0, 100);
+    const axisMax = Math.max(
+        state.dailyGoal,
+        Math.ceil(maxValue / 10) * 10
+    );
 
     elements.weekRangeLabel.textContent =
         `${formatShortDate(weekDays[0])} – ${formatShortDate(weekDays[6])}`;
 
     elements.weeklyChartYAxis.innerHTML = `
-        <div class="week-y-plot">
-            <span class="week-axis-label axis-max">${axisMax}</span>
-            <span class="week-axis-label goal-axis-label" style="bottom: ${goalPercent}%">${state.dailyGoal}</span>
-            <span class="week-axis-label axis-zero">0</span>
-        </div>
+        <span>${axisMax}</span>
+        <span class="goal-axis-label">${state.dailyGoal}</span>
+        <span>0</span>
     `;
 
     elements.weeklyChart.innerHTML = "";
@@ -1107,35 +1102,12 @@ function applyActiveOrder(activeIds) {
     saveState();
 }
 
-function setFullCardDragPreview(event, item) {
-    if (!event.dataTransfer || !item) return;
-
-    const preview = item.cloneNode(true);
-    const rect = item.getBoundingClientRect();
-
-    preview.classList.remove("dragging");
-    preview.classList.add("drag-preview-card");
-    preview.style.width = `${rect.width}px`;
-    preview.style.height = `${rect.height}px`;
-
-    document.body.appendChild(preview);
-    event.dataTransfer.setDragImage(
-        preview,
-        Math.min(32, rect.width / 2),
-        Math.min(24, rect.height / 2)
-    );
-
-    // Chrome braucht das Element nur für den Moment, in dem das Drag-Bild erzeugt wird.
-    setTimeout(() => preview.remove(), 0);
-}
-
 function setupManageDragHandle(handle, item, taskId) {
     item.addEventListener("dragstart", (event) => {
         draggedManageTaskId = taskId;
         item.classList.add("dragging");
         event.dataTransfer.effectAllowed = "move";
         event.dataTransfer.setData("text/plain", taskId);
-        setFullCardDragPreview(event, item);
     });
 
     item.addEventListener("dragend", () => {

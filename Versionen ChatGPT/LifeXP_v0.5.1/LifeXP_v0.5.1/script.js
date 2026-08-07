@@ -836,11 +836,10 @@ function renderWeeklyChart() {
     const values = weekDays.map((date) => getDayXp(toDateKey(date)));
     const maxValue = Math.max(state.dailyGoal, ...values, 1);
 
-    // Die Wochenansicht hat immer mindestens 80 XP Platz nach oben.
-    // Sobald ein Tag höher liegt, wächst die Skala automatisch in 20er-Schritten
-    // und lässt weiterhin etwas Luft oberhalb des höchsten Balkens.
-    const desiredMaximum = Math.max(80, maxValue + 10, state.dailyGoal + 30);
-    const axisMax = Math.max(80, Math.ceil(desiredMaximum / 20) * 20);
+    // Immer etwas Luft oberhalb des höchsten Balkens lassen. Dadurch liegt z. B.
+    // ein 50-XP-Balken wirklich auf der 50-XP-Ziellinie statt am oberen Rand.
+    const paddedMaximum = Math.max(maxValue * 1.2, state.dailyGoal * 1.2, 10);
+    const axisMax = Math.max(10, Math.ceil(paddedMaximum / 10) * 10);
     const goalPercent = clamp((state.dailyGoal / axisMax) * 100, 0, 100);
 
     elements.weekRangeLabel.textContent =
