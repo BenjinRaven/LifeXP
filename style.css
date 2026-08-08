@@ -3794,3 +3794,161 @@ body.live-reordering .task-grid .live-drag-placeholder {
         flex-direction: row;
     }
 }
+
+
+/* =========================================================
+   LifeXP v0.7.13 – Aktivitäten-Karten wirklich neu angeordnet
+   ========================================================= */
+
+/*
+ * v0.7.12 hat kaum sichtbar gewirkt, weil die dort verwendeten Selektoren
+ * (.manage-row, .manage-info, .manage-name, .manage-meta) im tatsächlichen
+ * DOM gar nicht existieren.
+ *
+ * Die echten Elemente heißen:
+ * .manage-item
+ * .drag-handle
+ * .manage-item-text
+ * .manage-actions
+ */
+
+/* Karte nutzt die volle Höhe sinnvoll aus. */
+#activeTaskList .manage-item,
+#inactiveTaskList .manage-item {
+    min-height: 72px;
+    padding: 11px 12px;
+    gap: 10px;
+    grid-template-columns: 30px minmax(0, 1fr) auto;
+    align-items: center;
+}
+
+/* Griff bleibt kompakt, damit mehr Platz für Inhalt bleibt. */
+#activeTaskList .drag-handle,
+#inactiveTaskList .drag-handle {
+    width: 30px;
+    min-width: 30px;
+    height: 42px;
+    border-radius: 10px;
+    font-size: 20px;
+}
+
+/*
+ * Name + XP in einer kompakteren horizontalen Anordnung.
+ * Bei wenig Platz darf sauber umgebrochen werden.
+ */
+#activeTaskList .manage-item-text,
+#inactiveTaskList .manage-item-text {
+    min-width: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    align-content: center;
+    flex-wrap: wrap;
+    column-gap: 10px;
+    row-gap: 4px;
+    justify-content: flex-start;
+}
+
+#activeTaskList .manage-item-text strong,
+#inactiveTaskList .manage-item-text strong {
+    min-width: 0;
+    max-width: 100%;
+    font-size: 17px;
+    line-height: 1.2;
+    font-weight: 800;
+    letter-spacing: -0.015em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#activeTaskList .manage-item-text span,
+#inactiveTaskList .manage-item-text span {
+    margin-top: 0;
+    font-size: 13px;
+    line-height: 1.15;
+    font-weight: 720;
+    white-space: nowrap;
+}
+
+/* Buttons kompakter, aber weiterhin gut tippbar. */
+#activeTaskList .manage-actions,
+#inactiveTaskList .manage-actions {
+    min-width: 0;
+    gap: 6px;
+    margin-left: auto;
+}
+
+#activeTaskList .manage-actions .small-button,
+#inactiveTaskList .manage-actions .small-button {
+    min-height: 42px;
+    padding: 7px 11px;
+    font-size: 13px;
+    border-radius: 12px;
+}
+
+/*
+ * Auf dem iPhone bekommt der Name noch etwas mehr Gewicht.
+ * Wenn Name + XP zusammen nicht in eine Zeile passen, geht die XP-Zeile
+ * direkt darunter – ohne unnötigen Leerraum.
+ */
+@media (max-width: 560px) {
+    #activeTaskList .manage-item,
+    #inactiveTaskList .manage-item {
+        min-height: 76px;
+        padding: 11px 10px;
+        gap: 8px;
+        grid-template-columns: 28px minmax(0, 1fr) auto;
+    }
+
+    #activeTaskList .drag-handle,
+    #inactiveTaskList .drag-handle {
+        width: 28px;
+        min-width: 28px;
+        height: 40px;
+    }
+
+    #activeTaskList .manage-item-text,
+    #inactiveTaskList .manage-item-text {
+        column-gap: 8px;
+        row-gap: 3px;
+    }
+
+    #activeTaskList .manage-item-text strong,
+    #inactiveTaskList .manage-item-text strong {
+        font-size: 18px;
+    }
+
+    #activeTaskList .manage-item-text span,
+    #inactiveTaskList .manage-item-text span {
+        font-size: 13.5px;
+    }
+
+    #activeTaskList .manage-actions .small-button,
+    #inactiveTaskList .manage-actions .small-button {
+        min-height: 42px;
+        padding: 7px 10px;
+        font-size: 13px;
+    }
+}
+
+/* Versionsanzeige ganz unten in Einstellungen. */
+.app-version-info {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 20px 4px 6px;
+    padding: 12px 4px calc(8px + env(safe-area-inset-bottom));
+    border-top: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.3;
+}
+
+@media (max-width: 430px) {
+    .app-version-info {
+        flex-direction: column;
+        gap: 3px;
+        text-align: center;
+    }
+}
