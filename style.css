@@ -3670,3 +3670,127 @@ body.live-reordering .task-grid .live-drag-placeholder {
     border-color: color-mix(in srgb, var(--primary) 46%, var(--border));
     background: color-mix(in srgb, var(--primary) 6%, var(--surface));
 }
+
+
+/* =========================================================
+   LifeXP v0.7.12 – Aktivitäten-Karten: bessere Raumnutzung
+   ========================================================= */
+
+/*
+ * Die Karten bleiben kompakt, nutzen ihre Höhe aber besser:
+ * - größere Aktivitätsnamen
+ * - XP / Wiederholbar direkt rechts neben dem Namen
+ * - Bearbeiten-Button kompakter
+ * - Drag-Griff etwas schmaler
+ */
+.manage-row {
+    min-height: 74px;
+    padding: 13px 14px;
+    gap: 12px;
+}
+
+.manage-drag-handle {
+    flex: 0 0 28px;
+    width: 28px;
+    min-width: 28px;
+    height: 44px;
+    padding: 0;
+    align-self: center;
+}
+
+.manage-info {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 9px 12px;
+    flex-wrap: wrap;
+    align-content: center;
+}
+
+.manage-name {
+    min-width: 0;
+    max-width: 100%;
+    font-size: 17px;
+    line-height: 1.18;
+    font-weight: 800;
+    letter-spacing: -0.015em;
+}
+
+.manage-meta {
+    margin-top: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    flex: 0 0 auto;
+    font-size: 13px;
+    line-height: 1.1;
+    font-weight: 720;
+    white-space: nowrap;
+}
+
+.manage-actions {
+    flex: 0 0 auto;
+    margin-left: auto;
+    align-self: center;
+    gap: 7px;
+}
+
+.manage-actions .secondary-button,
+.manage-actions .primary-button,
+.manage-actions button {
+    min-height: 46px;
+    padding: 0 13px;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+/*
+ * Auf schmalen iPhones soll der Name den verfügbaren Raum bekommen.
+ * Meta darf in die zweite Zeile rutschen, aber ohne die alte große
+ * ungenutzte Lücke zwischen Name und XP.
+ */
+@media (max-width: 560px) {
+    .manage-row {
+        min-height: 78px;
+        padding: 12px 12px;
+        gap: 9px;
+    }
+
+    .manage-drag-handle {
+        flex-basis: 26px;
+        width: 26px;
+        min-width: 26px;
+    }
+
+    .manage-info {
+        gap: 5px 9px;
+    }
+
+    .manage-name {
+        font-size: 18px;
+        line-height: 1.15;
+    }
+
+    .manage-meta {
+        font-size: 13.5px;
+    }
+
+    .manage-actions .secondary-button,
+    .manage-actions .primary-button,
+    .manage-actions button {
+        min-height: 44px;
+        padding-inline: 11px;
+        font-size: 13.5px;
+    }
+}
+
+/*
+ * Wenn genug horizontale Breite vorhanden ist, stehen Name und XP bewusst
+ * nebeneinander. Bei langen Namen bricht nur die Info-Zone sauber um.
+ */
+@media (min-width: 390px) {
+    .manage-info {
+        flex-direction: row;
+    }
+}
