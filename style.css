@@ -3952,3 +3952,208 @@ body.live-reordering .task-grid .live-drag-placeholder {
         text-align: center;
     }
 }
+
+
+/* =========================================================
+   LifeXP v0.7.14
+   - erledigte Karten im Dark Mode klarer hervorheben
+   - Aktivitäten-Verwaltung kompakter und ausgewogener
+   ========================================================= */
+
+/* Im Dark Mode soll "erledigt" bewusst sichtbar sein, ohne grell zu werden. */
+@media (prefers-color-scheme: dark) {
+    .task-tile.completed {
+        border-color: color-mix(in srgb, var(--positive) 58%, var(--border)) !important;
+        background:
+            linear-gradient(
+                145deg,
+                color-mix(in srgb, var(--positive) 20%, var(--surface)),
+                color-mix(in srgb, var(--positive) 10%, var(--surface))
+            ) !important;
+        box-shadow:
+            inset 0 0 0 1px color-mix(in srgb, var(--positive) 13%, transparent),
+            0 10px 28px color-mix(in srgb, var(--positive) 10%, transparent) !important;
+    }
+
+    .task-tile.completed .task-emoji {
+        opacity: 0.78;
+        filter: saturate(0.9);
+    }
+
+    .task-tile.completed .task-name {
+        color: color-mix(in srgb, var(--text) 76%, var(--positive) 24%);
+        opacity: 0.86;
+    }
+
+    .task-tile.completed .task-xp {
+        color: color-mix(in srgb, var(--positive) 68%, var(--text));
+        opacity: 0.78;
+    }
+}
+
+/*
+ * Auch die manuell gewählten dunklen LifeXP-Themes laufen nicht zwingend
+ * über prefers-color-scheme. Moderne Browser unterstützen :has(), daher
+ * verstärken wir erledigte Karten zusätzlich, wenn die Seite selbst dunkel ist.
+ */
+body:has(.bottom-nav) .task-tile.completed {
+    --completed-accent: color-mix(in srgb, var(--positive) 52%, var(--border));
+}
+
+/* Verwaltung: Zwischenstand zwischen v0.7.11 und der zu großen v0.7.13. */
+@media (max-width: 560px) {
+    #activeTaskList .manage-item,
+    #inactiveTaskList .manage-item {
+        min-height: 66px !important;
+        padding: 8px 10px !important;
+        gap: 8px !important;
+        grid-template-columns: 26px minmax(0, 1fr) auto !important;
+    }
+
+    #activeTaskList .drag-handle,
+    #inactiveTaskList .drag-handle {
+        width: 26px !important;
+        min-width: 26px !important;
+        height: 36px !important;
+        font-size: 18px !important;
+    }
+
+    #activeTaskList .manage-item-text,
+    #inactiveTaskList .manage-item-text {
+        column-gap: 7px !important;
+        row-gap: 2px !important;
+        align-content: center !important;
+    }
+
+    #activeTaskList .manage-item-text strong,
+    #inactiveTaskList .manage-item-text strong {
+        font-size: 16px !important;
+        line-height: 1.12 !important;
+        font-weight: 780 !important;
+    }
+
+    #activeTaskList .manage-item-text span,
+    #inactiveTaskList .manage-item-text span {
+        font-size: 12.5px !important;
+        line-height: 1.05 !important;
+        font-weight: 700 !important;
+    }
+
+    #activeTaskList .manage-actions .small-button,
+    #inactiveTaskList .manage-actions .small-button {
+        min-height: 38px !important;
+        padding: 6px 10px !important;
+        font-size: 12.5px !important;
+        border-radius: 11px !important;
+    }
+}
+
+/* Desktop ebenfalls leicht kompakter als v0.7.13. */
+@media (min-width: 561px) {
+    #activeTaskList .manage-item,
+    #inactiveTaskList .manage-item {
+        min-height: 66px;
+        padding-block: 9px;
+    }
+
+    #activeTaskList .manage-item-text strong,
+    #inactiveTaskList .manage-item-text strong {
+        font-size: 16px;
+    }
+}
+
+body.dark-mode .task-tile.completed {
+    border-color: color-mix(in srgb, var(--positive) 62%, var(--border)) !important;
+    background: linear-gradient(
+        145deg,
+        color-mix(in srgb, var(--positive) 22%, var(--surface)),
+        color-mix(in srgb, var(--positive) 11%, var(--surface))
+    ) !important;
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--positive) 15%, transparent),
+        0 10px 28px color-mix(in srgb, var(--positive) 11%, transparent) !important;
+}
+
+body[data-theme*="dark"] .task-tile.completed {
+    border-color: color-mix(in srgb, var(--positive) 62%, var(--border)) !important;
+    background: linear-gradient(
+        145deg,
+        color-mix(in srgb, var(--positive) 22%, var(--surface)),
+        color-mix(in srgb, var(--positive) 11%, var(--surface))
+    ) !important;
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--positive) 15%, transparent),
+        0 10px 28px color-mix(in srgb, var(--positive) 11%, transparent) !important;
+}
+
+body[data-theme="dark-neon"] .task-tile.completed {
+    border-color: color-mix(in srgb, var(--positive) 62%, var(--border)) !important;
+    background: linear-gradient(
+        145deg,
+        color-mix(in srgb, var(--positive) 22%, var(--surface)),
+        color-mix(in srgb, var(--positive) 11%, var(--surface))
+    ) !important;
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--positive) 15%, transparent),
+        0 10px 28px color-mix(in srgb, var(--positive) 11%, transparent) !important;
+}
+
+body[data-theme="cyber-lime"] .task-tile.completed {
+    border-color: color-mix(in srgb, var(--positive) 62%, var(--border)) !important;
+    background: linear-gradient(
+        145deg,
+        color-mix(in srgb, var(--positive) 22%, var(--surface)),
+        color-mix(in srgb, var(--positive) 11%, var(--surface))
+    ) !important;
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--positive) 15%, transparent),
+        0 10px 28px color-mix(in srgb, var(--positive) 11%, transparent) !important;
+}
+
+body[data-theme="neon-cyan"] .task-tile.completed {
+    border-color: color-mix(in srgb, var(--positive) 62%, var(--border)) !important;
+    background: linear-gradient(
+        145deg,
+        color-mix(in srgb, var(--positive) 22%, var(--surface)),
+        color-mix(in srgb, var(--positive) 11%, var(--surface))
+    ) !important;
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--positive) 15%, transparent),
+        0 10px 28px color-mix(in srgb, var(--positive) 11%, transparent) !important;
+}
+
+body[data-theme="midnight-neon"] .task-tile.completed {
+    border-color: color-mix(in srgb, var(--positive) 62%, var(--border)) !important;
+    background: linear-gradient(
+        145deg,
+        color-mix(in srgb, var(--positive) 22%, var(--surface)),
+        color-mix(in srgb, var(--positive) 11%, var(--surface))
+    ) !important;
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--positive) 15%, transparent),
+        0 10px 28px color-mix(in srgb, var(--positive) 11%, transparent) !important;
+}
+
+body[data-theme="deep-ocean"] .task-tile.completed {
+    border-color: color-mix(in srgb, var(--positive) 62%, var(--border)) !important;
+    background: linear-gradient(
+        145deg,
+        color-mix(in srgb, var(--positive) 22%, var(--surface)),
+        color-mix(in srgb, var(--positive) 11%, var(--surface))
+    ) !important;
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--positive) 15%, transparent),
+        0 10px 28px color-mix(in srgb, var(--positive) 11%, transparent) !important;
+}
+
+body[data-theme="obsidian"] .task-tile.completed {
+    border-color: color-mix(in srgb, var(--positive) 62%, var(--border)) !important;
+    background: linear-gradient(
+        145deg,
+        color-mix(in srgb, var(--positive) 22%, var(--surface)),
+        color-mix(in srgb, var(--positive) 11%, var(--surface))
+    ) !important;
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--positive) 15%, transparent),
+        0 10px 28px color-mix(in srgb, var(--positive) 11%, transparent) !important;
+}
