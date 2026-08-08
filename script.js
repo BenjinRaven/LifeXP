@@ -1,5 +1,5 @@
 const STORAGE_KEY = "lifexp-state-v1";
-const SCHEMA_VERSION = 9;
+const SCHEMA_VERSION = 10;
 const DEFAULT_DAY_RESET_MINUTES = 4 * 60;
 let emojiMemoryCache = {};
 
@@ -307,11 +307,15 @@ function loadState() {
                 return;
             }
 
-            if (!existingTask.custom) {
-                existingTask.name = catalogTask.name;
-                existingTask.emoji = catalogTask.emoji;
-                existingTask.xp = catalogTask.xp;
-            }
+            /*
+             * Bestehende Standardaktivitäten NICHT mehr auf ihre
+             * Katalogwerte zurücksetzen.
+             *
+             * Name, Emoji, XP und Wiederholbar dürfen vom Nutzer bearbeitet
+             * werden und bleiben anschließend dauerhaft im Local Storage.
+             * defaultCatalog dient nur noch dazu, fehlende Standardaktivitäten
+             * bei älteren Installationen hinzuzufügen.
+             */
         });
 
         if (Number(parsed.schemaVersion) < 3) {
@@ -1432,8 +1436,148 @@ function renderHistory() {
 
         information.append(name, time);
         item.append(information, xp);
+
+        item.dataset.historyId = entry.id;
+        setupHistorySwipe(item, entry.id);
+
         elements.historyList.appendChild(item);
     });
+}
+
+
+function removeHistoryEntryById(entryId) {
+    const before = state.history.length;
+
+    state.history = state.history.filter(
+        (entry) => String(entry.id) !== String(entryId)
+    );
+
+    if (state.history.length === before) return false;
+
+    saveState();
+    render();
+    return true;
+}
+
+function resetHistorySwipeVisual(item) {
+    item.classList.remove("history-swiping");
+    item.style.removeProperty("--history-swipe-progress");
+    item.style.removeProperty("transform");
+}
+
+function setupHistorySwipe(item, entryId) {
+    const threshold = 88;
+    const maxDistance = 138;
+
+    let startX = 0;
+    let startY = 0;
+    let latestX = 0;
+    let swiping = false;
+
+    const applyPosition = (dx) => {
+        latestX = Math.max(0, Math.min(dx, maxDistance));
+        const progress = Math.min(latestX / threshold, 1);
+
+        item.classList.add("history-swiping");
+        item.style.setProperty("--history-swipe-progress", String(progress));
+        item.style.transform = `translateX(${latestX}px)`;
+    };
+
+    const finish = () => {
+        if (!swiping) {
+            resetHistorySwipeVisual(item);
+            return;
+        }
+
+        const remove = latestX >= threshold;
+        swiping = false;
+
+        if (remove) {
+            removeHistoryEntryById(entryId);
+        } else {
+            resetHistorySwipeVisual(item);
+        }
+    };
+
+    /* iPhone / Touch */
+    item.addEventListener("touchstart", (event) => {
+        if (event.touches.length !== 1) return;
+
+        const touch = event.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        latestX = 0;
+        swiping = false;
+        resetHistorySwipeVisual(item);
+    }, { passive: true });
+
+    item.addEventListener("touchmove", (event) => {
+        if (event.touches.length !== 1) return;
+
+        const touch = event.touches[0];
+        const dx = touch.clientX - startX;
+        const dy = touch.clientY - startY;
+
+        if (!swiping) {
+            const horizontalIntent =
+                dx > 9 &&
+                Math.abs(dx) > Math.abs(dy) * 1.25;
+
+            if (!horizontalIntent) return;
+            swiping = true;
+        }
+
+        event.preventDefault();
+        applyPosition(dx);
+    }, { passive: false });
+
+    item.addEventListener("touchend", finish, { passive: true });
+    item.addEventListener("touchcancel", () => {
+        swiping = false;
+        resetHistorySwipeVisual(item);
+    }, { passive: true });
+
+    /* Desktop: click-drag to the right works as well */
+    let mouseDown = false;
+
+    item.addEventListener("mousedown", (event) => {
+        if (event.button !== 0) return;
+
+        mouseDown = true;
+        startX = event.clientX;
+        startY = event.clientY;
+        latestX = 0;
+        swiping = false;
+        resetHistorySwipeVisual(item);
+    });
+
+    const onMouseMove = (event) => {
+        if (!mouseDown) return;
+
+        const dx = event.clientX - startX;
+        const dy = event.clientY - startY;
+
+        if (!swiping) {
+            const horizontalIntent =
+                dx > 9 &&
+                Math.abs(dx) > Math.abs(dy) * 1.25;
+
+            if (!horizontalIntent) return;
+            swiping = true;
+        }
+
+        event.preventDefault();
+        applyPosition(dx);
+    };
+
+    const onMouseUp = () => {
+        if (!mouseDown) return;
+        mouseDown = false;
+        finish();
+    };
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
 }
 
 function renderActionButtons() {
@@ -2494,7 +2638,15 @@ function setupCatalogDragHandle(handle, item, taskId) {
             touchDragStarted = true;
             item.classList.add("dragging");
             document.body.classList.add("live-reordering", "catalog-dragging");
-            createTouchDragGhost(item, startX, startY);
+
+            // Die echte Karte bleibt am Finger. Der Platzhalter hält
+            // währenddessen ihren Platz im Inaktiv-Katalog frei.
+            beginLiveCardDrag(
+                item,
+                startX,
+                startY,
+                "manage-placeholder catalog-source-placeholder"
+            );
         }, 180);
     }, { passive: true });
 
@@ -2513,7 +2665,7 @@ function setupCatalogDragHandle(handle, item, taskId) {
         }
 
         event.preventDefault();
-        moveTouchDragGhost(touch.clientX, touch.clientY);
+        moveLiveCardDrag(touch.clientX, touch.clientY);
         updateCatalogDropIndicator(touch.clientX, touch.clientY);
 
         const viewportEdge = 72;
@@ -2533,17 +2685,30 @@ function setupCatalogDragHandle(handle, item, taskId) {
         }
 
         item.classList.remove("dragging");
-        removeTouchDragGhost();
         document.body.classList.remove("live-reordering", "catalog-dragging");
 
-        const dropped = finishCatalogDrop(taskId);
+        const hasValidDrop =
+            elements.activeTaskList?.classList.contains("catalog-drop-zone");
+
+        const targetId = catalogDropTargetId;
+        const insertAfter = catalogDropAfter;
+
+        /*
+         * Erst die Floating-Karte sauber aus dem alten Katalog entfernen,
+         * danach aktivieren/rendern. So funktioniert Inaktiv -> Aktiv
+         * auch auf Touch wieder zuverlässig.
+         */
+        if (hasValidDrop) {
+            endLiveCardDrag({ restore: false });
+            clearCatalogDropIndicators();
+            activateCatalogTaskAtPosition(taskId, targetId, insertAfter);
+        } else {
+            endLiveCardDrag({ restore: true });
+            clearCatalogDropIndicators();
+        }
 
         draggedCatalogTaskId = null;
         touchDragStarted = false;
-
-        if (!dropped) {
-            renderManagement();
-        }
     };
 
     item.addEventListener("touchend", finishTouchCatalogDrag, { passive: true });
